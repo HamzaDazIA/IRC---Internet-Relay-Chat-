@@ -46,13 +46,41 @@ void Server::fd_to_NonBlocking(int &fd)
 }
 
 //error part 
-std::string Server::errorUNKNOWNCOMMAND(std::string &client, std::string commad)
+void Server::errorUNKNOWNCOMMAND(int fd, std::string &client, std::string commad)
 {
-    return ("ft_irc.24 (421) " + client + " " + commad + ERR_UNKNOWNCOMMAND);
+    std::string err = "ft_irc.1337 (421) " + client + " " + commad + ERR_UNKNOWNCOMMAND;
+    send(fd, err.c_str(), err.length(), 0);
+}
+
+void Server::errorPASSWDMISMATCH(int fd, std::string nick_client)
+{
+    std::string err = "ft_irc.1337 (464) " + nick_client + ERR_PASSWDMISMATCH;
+    send(fd, err.c_str(), err.length(), 0);
+}
+
+void Server::errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string comand)
+{
+    std::string err = "ft_irc.1337 (461) " + nick_client + " " + comand + ERR_NEEDMOREPARAMS;
+    send(fd, err.c_str() , err.length(), 0);
+
 }
 
 //handel new CLient
 
+void Server::checkPASS(std::string pass, std::map<int , Client>::iterator& client)
+{
+    std::string pass_server = this->get_password();
+    if (pass == pass_server)
+    {
+        client->second.setRegistered(true);
+        return;
+    }
+    else
+    {
+        throw::std::logic_error("wrong password. Disconnecting.");
+    }
+    
+}
 void Server::handelNewClient(int &server_fd)
 {
 
@@ -80,6 +108,81 @@ void Server::handelNewClient(int &server_fd)
 }
 
 //handel client;
+
+void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::string commad)
+{
+    std::vector<std::string> commandss = Help::split_command(commad);
+    std::string cmd = "CAP";
+    std::vector<std::string>::iterator it = commandss.begin();
+    if (commandss.size() > 0)
+    {
+        if (it[0] ==  cmd)
+        {
+            std::string nick = it_client->second.getNickname();
+            if (nick.empty())
+            {
+                nick = "*"; //because we dont have name of client we replace to be "*"
+            }
+            this->errorUNKNOWNCOMMAND(it_client->first, nick, cmd);
+    
+            std::cout << "Send 421 to clinet " << it_client->first << ": " << cmd << std::endl;
+            return ; 
+        }
+        cmd = "PASS";
+        if (it[0] == cmd)
+        {
+            if () //check is already register if already regester send erro 462.
+
+            if (commandss.size() > 1)
+            {
+                try
+                {
+                    this->checkPASS(it[1], it_client);
+                }
+                catch(const std::exception& e)
+                {
+                    std::string nick_name = Help::nick_name(it_client->second.getNickname());
+                    
+                    this->errorPASSWDMISMATCH(it_client->first, nick_name);
+                    std::cout << "Send 464 to client " <<  it_client->first << " " << e.what();
+                    throw 464;
+                }
+                
+            }
+            else
+            {
+                std::string nick_name = Help::nick_name(it_client->second.getNickname());
+                this->errorNEEDMOREPARAMS(it_client->first, nick_name, cmd);
+
+                std::cout << "Send 461 to client " << it_client->first << ": " << cmd << "\"" << ERR_NEEDMOREPARAMS << "\"" << std::endl;
+                return;
+            }
+            
+        }
+    }
+
+
+    
+}
+
+void Server::handelBuffer(std::map<int, Client>::iterator &it_client)
+{
+    std::string temp = it_client->second.getBuffer();
+    size_t pos = temp.find('\n');
+    while((pos != std::string::npos ))
+    {
+        std::string commad  = temp.substr(0, pos);
+
+        commad = Help::trim(commad);
+        it_client->second.erase_buffer(0 , pos + 1 );
+        if (!commad.empty())
+        {
+            this->handelCommand(it_client, commad); // send command after split him to proccesing 
+        }
+        pos = temp.find('\n');
+    }
+}
+
 void Server::handelClient(struct pollfd &even_client)
 {
     std::map<int, Client>::iterator  it = this->clients.find(even_client.fd);
@@ -119,7 +222,6 @@ void Server::handelClient(struct pollfd &even_client)
         else if (bytesRead == 0)
         {
             // Client disconnected
-            close(even_client.fd);
             this->clients.erase(it);
             for (std::vector<struct pollfd>::iterator p_it = this->fds.begin(); p_it != this->fds.end(); ++p_it)
             {
@@ -129,6 +231,7 @@ void Server::handelClient(struct pollfd &even_client)
                     break;
                 }
             }
+            close(even_client.fd);
         }
         else
         {
@@ -140,54 +243,30 @@ void Server::handelClient(struct pollfd &even_client)
             // Here you can add further processing of the client's message
         }
     }
-    this->handelBuffer(it); // here we check if client send all command by tirminited /r /n
-}
-
-void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::string commad)
-{
-    std::vector<std::string> commandss = Help::split_command(commad);
-    std::string cmd = "CAP";
-    std::vector<std::string>::iterator it = commandss.begin();
-    if (it[0] ==  cmd)
+    try
     {
-        std::string nick = it_client->second.getNickname();
-        if (nick.empty())
+        this->handelBuffer(it); // here we check if client send all command by tirminited /r /n
+        
+    }
+    catch(int err)
+    {
+        if (err == 464)
         {
-            nick = "*"; //because we dont have name of client we replace to be "*"
+            this->clients.erase(it);
+            for (std::vector<struct pollfd>::iterator p_it = this->fds.begin(); p_it != this->fds.end(); ++p_it)
+            {
+                if (p_it->fd == even_client.fd)
+                {
+                    this->fds.erase(p_it);
+                    break;
+                }
+            }
+            close(even_client.fd);
         }
-        std::string message = this->errorUNKNOWNCOMMAND(nick, cmd);
-
-        std::cout << "Send 421 to clinet " << it_client->first << ": " << cmd << std::endl;
-        return ; 
     }
-    cmd = "PASS";
-    
-    if (it[0] == cmd)
-    {
-
-    }
-
-    
     
 }
 
-void Server::handelBuffer(std::map<int, Client>::iterator &it_client)
-{
-    std::string temp = it_client->second.getBuffer();
-    size_t pos = temp.find('\n');
-    while((pos != std::string::npos ))
-    {
-        std::string commad  = temp.substr(0, pos);
-
-        commad = Help::trim(commad);
-        it_client->second.erase_buffer(0 , pos + 1 );
-        if (!commad.empty())
-        {
-            this->handelCommand(it_client, commad);
-        }
-        pos = temp.find('\n');
-    }
-}
 
 
 void Server::start_server(void)

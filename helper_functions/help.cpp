@@ -15,23 +15,33 @@ std::string Help::trim(std::string &str) throw()
     return str.substr(start, end - start + 1);
 }
 
-std::vector<std::string>& Help::split_command(std::string commads)
+std::vector<std::string> Help::split_command(std::string commads)
 {
-    std::string del = " \t";
-    std::vector<std::string> vector ;
-    size_t pos = commads.find(del);
+    std::vector<std::string> args ;
+    std::istringstream iss(commads);
+    std::string tokens;
 
-
-    // case if we have one command 
-
-    while(pos != std::string::npos)
+    while(iss >> tokens)
     {
-        std::string cur = commads.substr(0, pos + 1);
-        if (cur.empty())
-            continue;
-        vector.push_back(cur);
-        commads.erase(0, pos + 1);
-        pos = commads.find(del);
+        if (tokens[0] == ':')
+        {
+            size_t  pos  = commads.find(tokens);
+            
+            std::string cur = commads.substr(pos + 1);
+            args.push_back(cur);
+            break;
+        }
+        else
+        {
+            args.push_back(tokens);
+        }
     }
-    return vector;
+    return args;
+
+}
+
+std::string nick_name(std::string nick)
+{
+    return (nick.empty() ? "*" : nick); // condition ? value_if_true : value_if_false;
+
 }

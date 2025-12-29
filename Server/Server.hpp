@@ -11,13 +11,14 @@
 #include <unistd.h>
 #include "../Client/Client.hpp"
 #include "../helper_functions/help.hpp"
+#include <sstream>
 
 
 //error Server
 #define FAILDE -1  
-#define ERR_PASSWDMISMATCH "ft_irc.42 (464) :Password incorrect ";
-#define ERR_UNKNOWNCOMMAND " :Unknown command"
-
+#define ERR_PASSWDMISMATCH " :Password incorrect.";
+#define ERR_UNKNOWNCOMMAND " :Unknown command."
+#define ERR_NEEDMOREPARAMS " :Not enough parameters"
 class Server
 {
     private:
@@ -44,11 +45,12 @@ class Server
             void handelClient(struct pollfd &even_client);
             void handelBuffer(std::map<int, Client>::iterator &it);
             void handelCommand(std::map<int, Client>::iterator &it_client , std::string commad);
-            void checkPASS();
+            void checkPASS(std::string pass,  std::map<int , Client>::iterator& Client);
 
             //error part 
-            std::string errorUNKNOWNCOMMAND(std::string &client, std::string commad);
-
+            void errorUNKNOWNCOMMAND(int fd, std::string &nick_client, std::string commad);
+            void errorPASSWDMISMATCH(int fd, std::string nick_client);
+            void errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string comand);
 };
 
 #endif
