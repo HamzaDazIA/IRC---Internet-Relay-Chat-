@@ -61,10 +61,32 @@ void Server::errorPASSWDMISMATCH(int fd, std::string nick_client)
 void Server::errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string comand)
 {
     std::string err = "ft_irc.1337 (461) " + nick_client + " " + comand + ERR_NEEDMOREPARAMS;
-    send(fd, err.c_str() , err.length(), 0);
-
+    send(fd, err.c_str(), err.length(), 0);
 }
 
+void Server::errorALREADYREGISTERED(int fd, std::string nick_client)
+{
+    std::string err = "ft_irc.1337 (462) " + nick_client + ERR_ALREADYREGISTERED;
+    send (fd, err.c_str(), err.length(), 0);
+}
+
+void Server::errorNICKNAMEINUSE(int fd, std::string nick_clint)
+{
+    std::string err = "ft_irc.1337 (433) " + nick_clint + ERR_NICKNAMEINUSE;
+    send(fd, err.c_str(), err.length(), 0);
+}
+
+void Server::errorNONICKNAMEGIVEN(int fd, std::string nick_client)
+{
+    std::string err = "ft_irc.1337 (461) " + nick_client + ERR_NONICKNAMEGIVEN;
+    send(fd, err.c_str(), err.length(), 0);
+}
+
+void Server::errorERRONEUSNICKNAME(int fd, std::string nick_client)
+{
+    std::string err = "ft_irc.1337 (432) " + nick_client + ERR_ERRONEUSNICKNAME;
+    send(fd, err.c_str(), err.length(), 0);
+}
 //handel new CLient
 
 void Server::checkPASS(std::string pass, std::map<int , Client>::iterator& client)
@@ -107,7 +129,51 @@ void Server::handelNewClient(int &server_fd)
 
 }
 
+//set container
+void Server::set_newNICKNAME(std::string nick)
+{
+    if (this->nicknames.empty())
+    {
+        this->nicknames.insert(nick);
+        return;
+    }
+    else
+    {
+        std::set<std::string>::iterator it = this->nicknames.find(nick);
+        if (it == this->nicknames.end())
+        {
+            this->nicknames.insert(nick);
+            return;
+        }
+        else
+        {
+            throw 433;
+        }
+    }
+}
+
 //handel client;
+
+bool Server::parsingNICK(std::string &nick)
+{
+
+    if (isdigit(nick[0]))
+        return false;
+
+
+    std::string allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789[]\\`_^{|}-";
+
+
+    for (size_t i = 0; i < nick.size(); i++)
+    {
+        if (allowed.find(nick[i]) == std::string::npos)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::string commad)
 {
@@ -128,10 +194,17 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
             std::cout << "Send 421 to clinet " << it_client->first << ": " << cmd << std::endl;
             return ; 
         }
-        cmd = "PASS";
-        if (it[0] == cmd)
+        cmd = "PASS"; // error logic pass in comper
+        if (it[0] == cmd) // PASS comand
         {
-            if () //check is already register if already regester send erro 462.
+            if (it_client->second.isRegistered() == true)//check is already register if already regester send erro 462.
+            {
+                std::string nick_name = Help::nick_name(it_client->second.getNickname());
+                this->errorALREADYREGISTERED(it_client->first, nick_name);
+
+                std::cout << "Send 462 to client " << it_client->first << ": " << cmd << "\"" << ERR_ALREADYREGISTERED << "\"" << std::endl;
+                return;
+            } 
 
             if (commandss.size() > 1)
             {
@@ -159,8 +232,48 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
             }
             
         }
-    }
+        cmd = "NICK";
+        if (it[0] == cmd) // NICK COMAND
+        {
+            if (it_client->second.isRegistered() == true)
+            {
+                if (commandss.size() < 2)
+                {
+                    std::string nick = Help::nick_name(it_client->second.getNickname());
+                    this->errorNONICKNAMEGIVEN(it_client->first, nick);
+                    throw 431;
+                }
+                else
+                {
+                    bool status = this->parsingNICK(it[1]);
+                    if (status == false)
+                    {
+                        this->errorERRONEUSNICKNAME(it_client->first, it[1]);
+                        throw 432;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            this->set_newNICKNAME(it[1]);
+                        }
+                        catch(int e)
+                        {
+                            this->errorNICKNAMEINUSE(it_client->first, it[1]);
+                            throw 433;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                std::string nick_name = Help::nick_name(it_client->second.getNickname());
+                this->errorPASSWDMISMATCH(it_client->first, nick_name);
+                throw 464;
+            }
+        }
 
+    }
 
     
 }
@@ -262,6 +375,18 @@ void Server::handelClient(struct pollfd &even_client)
                 }
             }
             close(even_client.fd);
+        }
+        if (err == 431)
+        {
+            std::cout << "Send 431 to client " << even_client.fd << ERR_NONICKNAMEGIVEN;
+        }
+        if (err == 432)
+        {
+            std::cout << "Send 432 to client " << even_client.fd << ERR_ERRONEUSNICKNAME;
+        }
+        if (err == 433)
+        {
+            std::cout << "Send 433 to client " << even_client.fd << ERR_NICKNAMEINUSE;
         }
     }
     

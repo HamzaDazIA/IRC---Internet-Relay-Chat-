@@ -1,0 +1,15 @@
+# VS Code
+.vscode/
+
+# Build files
+*.o
+*.a
+*.out
+*.exe
+
+# Debug
+*.log
+*.dSYM/
+
+# System
+.DS_Store
