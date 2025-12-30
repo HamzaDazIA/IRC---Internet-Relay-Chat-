@@ -89,3 +89,15 @@ void Client::erase_buffer(size_t start , size_t end)
 {
     this->buffer.erase(start , end);
 }
+
+void Client::setFlage()
+{
+    if (flage > 2)
+        return;
+    flage++;
+}
+
+short Client::getFlage() const
+{
+    return flage;
+}

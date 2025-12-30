@@ -87,9 +87,13 @@ void Server::errorERRONEUSNICKNAME(int fd, std::string nick_client)
     std::string err = "ft_irc.1337 (432) " + nick_client + ERR_ERRONEUSNICKNAME;
     send(fd, err.c_str(), err.length(), 0);
 }
-//handel new CLient
 
-void Server::checkPASS(std::string pass, std::map<int , Client>::iterator& client)
+//overload operator
+
+
+// handel new CLient
+
+void Server::checkPASS(std::string pass, std::map<int, Client>::iterator &client)
 {
     std::string pass_server = this->get_password();
     if (pass == pass_server)
@@ -262,6 +266,7 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                             this->errorNICKNAMEINUSE(it_client->first, it[1]);
                             throw 433;
                         }
+                        it_client->second.setFlage();
                     }
                 }
             }
@@ -272,7 +277,29 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                 throw 464;
             }
         }
-
+        cmd = "USER";
+        if (it[0] == "USER")
+        {
+            if (it_client->second.isRegistered() == true)
+            {
+                if (commandss.size() < 4)
+                {
+                    std::string nick = Help::nick_name(it_client->second.getNickname());
+                    this->errorNONICKNAMEGIVEN(it_client->first, nick);
+                    throw 431;
+                }
+                else
+                {
+                    s
+                }
+            }
+            else
+            {
+                std::string nick_name = Help::nick_name(it_client->second.getNickname());
+                this->errorPASSWDMISMATCH(it_client->first, nick_name);
+                throw 464;
+            }
+        }
     }
 
     
