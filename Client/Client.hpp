@@ -20,19 +20,19 @@ class Client
         ~Client();
         //getters and setters
             std::string getBuffer() const;
-            void setBuffer(const std::string& buf);
+            void setBuffer(const std::string buf);
             int getFd() const;
             void setFd(int fd);
             void erase_buffer(size_t start , size_t end);
             //Registration Commands
             std::string getNickname() const;
-            void setNickname(const std::string& nick);
+            void setNickname(const std::string nick);
             std::string getUsername() const;
-            void setUsername(const std::string& user);
+            void setUsername(const std::string user);
             std::string getRealname() const;
-            void setRealname(const std::string& real);
+            void setRealname(const std::string real);
             std::string getMod() const;
-            void setMod(const std::string& mode);
+            void setMod(const std::string mode);
             bool isRegistered() const;
             void setRegistered(bool reg);
             bool isAuthenticated() const;

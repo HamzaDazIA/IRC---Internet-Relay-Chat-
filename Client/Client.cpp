@@ -11,7 +11,7 @@ std::string Client::getBuffer() const
     return buffer;
 }
 
-void Client::setBuffer(const std::string& buf)
+void Client::setBuffer(const std::string buf)
 {
     buffer = buf;
 }
@@ -31,7 +31,7 @@ std::string Client::getNickname() const
     return nickname;
 }
 
-void Client::setNickname(const std::string& nick)
+void Client::setNickname(const std::string nick)
 {
     nickname = nick;
 }
@@ -41,7 +41,7 @@ std::string Client::getUsername() const
     return username;
 }
 
-void Client::setUsername(const std::string& user)
+void Client::setUsername(const std::string user)
 {
     username = user;
 }
@@ -51,7 +51,7 @@ std::string Client::getRealname() const
     return realname;
 }
 
-void Client::setRealname(const std::string& real)
+void Client::setRealname(const std::string real)
 {
     realname = real;
 }
@@ -59,7 +59,7 @@ std::string Client::getMod() const
 {
     return mod;
 }
-void Client::setMod(const std::string& mode)
+void Client::setMod(const std::string mode)
 {
     mod = mode;
 }

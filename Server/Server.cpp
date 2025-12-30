@@ -201,7 +201,7 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
         cmd = "PASS"; // error logic pass in comper
         if (it[0] == cmd) // PASS comand
         {
-            if (it_client->second.isRegistered() == true)//check is already register if already regester send erro 462.
+            if (it_client->second.isRegistered() == true || it_client->second.isAuthenticated() == true)//check is already register if already regester send erro 462.
             {
                 std::string nick_name = Help::nick_name(it_client->second.getNickname());
                 this->errorALREADYREGISTERED(it_client->first, nick_name);
@@ -215,6 +215,8 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                 try
                 {
                     this->checkPASS(it[1], it_client);
+                    it_client->second.setAuthenticated(true);
+
                 }
                 catch(const std::exception& e)
                 {
@@ -239,7 +241,7 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
         cmd = "NICK";
         if (it[0] == cmd) // NICK COMAND
         {
-            if (it_client->second.isRegistered() == true)
+            if (it_client->second.isAuthenticated() == true )
             {
                 if (commandss.size() < 2)
                 {
@@ -280,17 +282,28 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
         cmd = "USER";
         if (it[0] == "USER")
         {
-            if (it_client->second.isRegistered() == true)
+            if (it_client->second.isAuthenticated() == true)
             {
-                if (commandss.size() < 4)
+                if (commandss.size() < 5)
                 {
                     std::string nick = Help::nick_name(it_client->second.getNickname());
-                    this->errorNONICKNAMEGIVEN(it_client->first, nick);
-                    throw 431;
+                    this->errorNEEDMOREPARAMS(it_client->first, nick, cmd);
+                    throw 461;
                 }
                 else
                 {
-                    s
+                    if (it_client->second.getFlage() == 2)
+                    {
+                        std::string nick = Help::nick_name(it_client->second.getNickname());
+                        this->errorALREADYREGISTERED(it_client->first, nick);
+                        std::cout << "Send 462 to client " << it_client->first << ": " << cmd << "\"" << ERR_ALREADYREGISTERED << "\"" << std::endl;
+                        return ;
+                    }
+                    else
+                    {
+                        it_client->second.setUsername()
+                    }
+
                 }
             }
             else
@@ -404,17 +417,11 @@ void Server::handelClient(struct pollfd &even_client)
             close(even_client.fd);
         }
         if (err == 431)
-        {
             std::cout << "Send 431 to client " << even_client.fd << ERR_NONICKNAMEGIVEN;
-        }
         if (err == 432)
-        {
             std::cout << "Send 432 to client " << even_client.fd << ERR_ERRONEUSNICKNAME;
-        }
         if (err == 433)
-        {
             std::cout << "Send 433 to client " << even_client.fd << ERR_NICKNAMEINUSE;
-        }
     }
     
 }
