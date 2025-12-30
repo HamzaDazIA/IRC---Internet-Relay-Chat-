@@ -301,7 +301,7 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                     }
                     else
                     {
-                        it_client->second.setUsername()
+                        it_client->second.setUsername(it[1])
                     }
 
                 }
