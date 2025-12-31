@@ -13,6 +13,7 @@
 #include "../helper_functions/help.hpp"
 #include <sstream>
 #include <set>
+#include <cerrno>
 
 //error Server
 #define FAILDE -1  

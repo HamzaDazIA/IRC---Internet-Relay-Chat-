@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include <cstdlib>
 
 
 int main(int ac, char **av)
@@ -9,8 +10,8 @@ int main(int ac, char **av)
         return 1;
     }
     char *end;
-    long long l_port  = std::strtoll(av[1], &end, 10);
-    if (*end != '\0'|| l_port >= 65,536 || l_port < 0)
+    long long l_port  = strtoll(av[1], &end, 10);
+    if (*end != '\0'|| l_port >= 65536 || l_port < 0)
     {
         std::cerr << "Error : The port number is not valide " << std::endl;
         return 1;

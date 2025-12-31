@@ -40,7 +40,7 @@ std::vector<std::string> Help::split_command(std::string commads)
 
 }
 
-std::string nick_name(std::string nick)
+std::string Help::nick_name(std::string nick)
 {
     return (nick.empty() ? "*" : nick); // condition ? value_if_true : value_if_false;
 
