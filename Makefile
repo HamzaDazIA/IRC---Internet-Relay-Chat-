@@ -1,7 +1,7 @@
 
 
 SRC =  Server/main.cpp Client/Client.cpp Server/Server.cpp helper_functions/help.cpp 
-NAME = server
+NAME = DEmoserver
 OBJ = $(SRC:.cpp=.o)
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98

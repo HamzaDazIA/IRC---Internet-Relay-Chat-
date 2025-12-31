@@ -104,6 +104,7 @@ void Server::handelNewClient(int &server_fd)
     socklen_t clinetlen = sizeof(newClient);
     int newClient_fd = accept(server_fd, (sockaddr *)&newClient, &clinetlen);
 
+    std::cout << "New client connected: " << newClient_fd << std::endl;
     if (newClient_fd == FAILDE)
     {
         throw std::runtime_error ("Error ACCEPT: Failde accept");
@@ -431,6 +432,7 @@ void Server::handelClient(struct pollfd &even_client)
 
 void Server::start_server(void)
 {
+    std::cout << "Starting server on port " << this->port << "..." << std::endl;
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (server_fd == FAILDE)
@@ -454,12 +456,14 @@ void Server::start_server(void)
         throw std::runtime_error("Error bind: Failde bind socket server.");
     }
     
+    std::cout << "Socket server binded to port " << this->port << std::endl;
     if (listen(server_fd, SOMAXCONN) == FAILDE) // SOMAXCONN. This tells the OS: "Give me the maximum possible queue size allowed on this specific machine
     {
         close(server_fd);
         throw std::runtime_error("Error listen: Failde listing socket server.");
     } 
 
+    std::cout << "Server is listening on port " << this->port << std::endl;
     struct pollfd fd_info = {};
     fd_info.fd  = server_fd;
     fd_info.events = POLLIN;
