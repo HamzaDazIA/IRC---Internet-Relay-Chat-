@@ -91,6 +91,7 @@ void handleNewConnection(int server_fd, std::vector<struct pollfd> &fds,
         }
         return;
     }
+    
 
     // Make client socket non-blocking too!
     if (!setNonBlocking(client_fd))

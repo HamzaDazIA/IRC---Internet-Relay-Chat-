@@ -81,7 +81,6 @@ void Server::errorERRONEUSNICKNAME(int fd, std::string nick_client)
 }
 
 
-
 // handel new CLient
 
 void Server::checkPASS(std::string pass, std::map<int, Client>::iterator &client)

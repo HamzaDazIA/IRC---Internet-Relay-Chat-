@@ -56,7 +56,6 @@ void Client::setRealname(const std::string real)
     realname = real;
 }
 
-
 bool Client::isRegistered() const
 {
     return registration;

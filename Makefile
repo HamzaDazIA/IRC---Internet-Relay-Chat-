@@ -1,6 +1,6 @@
 
 
-SRC =  Server/main.cpp Client/Client.cpp Server/Server.cpp helper_functions/help.cpp channel/channel.cpp
+SRC =  Server/main.cpp Client/Client.cpp Server/Server.cpp helper_functions/help.cpp 
 NAME = server
 OBJ = $(SRC:.cpp=.o)
 CXX = c++
@@ -22,5 +22,3 @@ fclean: clean
 	$(RM) $(NAME)
 
 re: fclean all
-
-.PHONY: clean 

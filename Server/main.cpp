@@ -16,6 +16,7 @@ int main(int ac, char **av)
         std::cerr << "Error : The port number is not valide " << std::endl;
         return 1;
     }
+    
     Server server(static_cast<int> (l_port), av[2]);
     
     try
@@ -27,5 +28,5 @@ int main(int ac, char **av)
         std::cerr << e.what() << std::endl;
     }
     
-    
+
 }

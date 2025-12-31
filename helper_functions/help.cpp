@@ -23,6 +23,7 @@ std::vector<std::string> Help::split_command(std::string commads)
 
     while(iss >> tokens)
     {
+        
         if (tokens[0] == ':')
         {
             size_t  pos  = commads.find(tokens);
