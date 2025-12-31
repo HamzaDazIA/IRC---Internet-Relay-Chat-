@@ -442,7 +442,8 @@ void Server::start_server(void)
 
     this->serverNAME = "ft_irc.1337";
     this->serverVERSION = "0.1";
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, get_option_sockopt(), sizeof(*(get_option_sockopt())));
+    int opt = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt , sizeof(*(get_option_sockopt())));
 
     struct sockaddr_in addr = {};
     addr.sin_family = AF_INET; // type of IP is IPv4 
