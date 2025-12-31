@@ -32,13 +32,15 @@ class Server
         std::vector<struct pollfd> fds;
         std::map<int, Client> clients;
         std::set<std::string> nicknames;
-        
+        std::string serverNAME;
+        std::string serverVERSION;
     public :
         Server(int port, std::string password);
         ~Server();
         int get_port(void) const ;
         std::string  get_password(void) const;
         void start_server(void);
+
         //set Containers
             void set_newNICKNAME(std::string nickname);
         //opt set_sockopt 
@@ -63,6 +65,7 @@ class Server
             void errorNICKNAMEINUSE(int fd, std::string nick_clint);
             void errorNONICKNAMEGIVEN(int fd, std::string nick_client);
             void errorERRONEUSNICKNAME(int fd, std::string nick_client);
+            void wellcomeMSG(std::map<int, Client>::iterator &it_client);
 };
 
 #endif

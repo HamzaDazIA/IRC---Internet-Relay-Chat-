@@ -262,6 +262,11 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                         try
                         {
                             this->set_newNICKNAME(it[1]);
+                            if (it_client->second.getFlage() == 2)
+                            {
+                                it_client->second.setRegistered(true);
+                                this->wellcomeMSG(it_client);
+                            }
                         }
                         catch(int e)
                         {
@@ -301,9 +306,16 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                     }
                     else
                     {
-                        it_client->second.setUsername(it[1])
+                        it_client->second.setUsername(it[1]);
+                        it_client->second.setRealname(it[4]);
+                        it_client->second.setFlage();
+                        if (it_client->second.getFlage() == 2)
+                        {
+                            it_client->second.setRegistered(true);
+                            this->wellcomeMSG(it_client);
+                        }
+                        
                     }
-
                 }
             }
             else
@@ -437,7 +449,8 @@ void Server::start_server(void)
         throw std::runtime_error("Error Socket : failde create socket.");
     }
 
-    
+    this->serverNAME = "ft_irc.1337";
+    this->serverVERSION = "0.1";
     set_option_sockopt(1);
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, get_option_sockopt(), sizeof(*(get_option_sockopt())));
 
@@ -499,4 +512,25 @@ void Server::start_server(void)
         }
     }
 
+}
+
+void Server::wellcomeMSG(std::map<int, Client>::iterator &it_client)
+{
+    Client &client = it_client->second;
+    int fd = it_client->first;
+    std::string nick = client.getNickname();
+    std::string user = client.getUsername();
+    std::string host = "localhost";
+
+    std::string rpl1 = ":" + this->serverNAME + " 001 " + nick + " :Welcome to the ft_irc Network " + nick + "!" + user + "@" + host + "\r\n";
+    send(fd, rpl1.c_str(), rpl1.length(), 0);
+
+    std::string rpl2 = ":" + this->serverNAME + " 002 " + nick + " :Your host is " + this->serverNAME + ", running version " + this->serverVERSION + "\r\n";
+    send(fd, rpl2.c_str(), rpl2.length(), 0);
+
+    std::string rpl3 = ":" + this->serverNAME + " 003 " + nick + " :This server was created Dec 21 2025\r\n";
+    send(fd, rpl3.c_str(), rpl3.length(), 0);
+
+    std::string rpl4 = ":" + this->serverNAME + " 004 " + nick + " " + this->serverNAME + " " + this->serverVERSION + " io itkol\r\n";
+    send(fd, rpl4.c_str(), rpl4.length(), 0);
 }

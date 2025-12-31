@@ -55,14 +55,7 @@ void Client::setRealname(const std::string real)
 {
     realname = real;
 }
-std::string Client::getMod() const
-{
-    return mod;
-}
-void Client::setMod(const std::string mode)
-{
-    mod = mode;
-}
+
 
 bool Client::isRegistered() const
 {
@@ -93,7 +86,9 @@ void Client::erase_buffer(size_t start , size_t end)
 void Client::setFlage()
 {
     if (flage > 2)
+    {
         return;
+    }
     flage++;
 }
 
@@ -101,3 +96,4 @@ short Client::getFlage() const
 {
     return flage;
 }
+
