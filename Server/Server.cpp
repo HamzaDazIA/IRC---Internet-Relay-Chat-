@@ -262,8 +262,7 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                         try
                         {
                             this->set_newNICKNAME(it[1]);
-                            if (it_client->second.getFlage() == 2)
-                            {
+                            if (it_client->second.getFlage() == 2) {
                                 it_client->second.setRegistered(true);
                                 this->wellcomeMSG(it_client);
                             }
