@@ -121,7 +121,7 @@ void Server::handelNewClient(int &server_fd)
     Client obj;
     obj.setFd(newClient_fd);
     
-    this->clients.insert({newClient_fd, obj});
+    this->clients.insert(std::make_pair(newClient_fd, obj));
 
 }
 
