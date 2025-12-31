@@ -28,7 +28,6 @@ class Server
     private:
         int port ;
         std::string password;
-        int *option_sockopt; // this ingeter of set_sockopt if ==1 the REUSEADDR is ON if ==0 is OFF
         std::vector<struct pollfd> fds;
         std::map<int, Client> clients;
         std::set<std::string> nicknames;

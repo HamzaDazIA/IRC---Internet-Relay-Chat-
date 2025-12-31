@@ -13,16 +13,8 @@ int Server::get_port(void) const{
 }
 
 
-//opt set_sockopt 
-int *Server::get_option_sockopt(void) const
-{
-    return (this->option_sockopt);
-}
 
-void Server::set_option_sockopt(int opt)
-{
-    this->option_sockopt = &opt;
-}
+
 
 std::string Server::get_password() const
 {
@@ -450,7 +442,6 @@ void Server::start_server(void)
 
     this->serverNAME = "ft_irc.1337";
     this->serverVERSION = "0.1";
-    set_option_sockopt(1);
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, get_option_sockopt(), sizeof(*(get_option_sockopt())));
 
     struct sockaddr_in addr = {};
