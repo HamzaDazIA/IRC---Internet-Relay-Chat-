@@ -80,7 +80,6 @@ void Server::errorERRONEUSNICKNAME(int fd, std::string nick_client)
     send(fd, err.c_str(), err.length(), 0);
 }
 
-//overload operator
 
 
 // handel new CLient

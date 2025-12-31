@@ -24,6 +24,7 @@
 #define ERR_NICKNAMEINUSE " :Nickname is already in use"
 #define ERR_NONICKNAMEGIVEN " :No nickname given"
 #define ERR_ERRONEUSNICKNAME " :Erroneus nickname"
+
 class Server
 {
     private:
