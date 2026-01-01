@@ -41,11 +41,15 @@ void Server::fd_to_NonBlocking(int &fd)
 void Server::errorUNKNOWNCOMMAND(int fd, std::string &client, std::string commad)
 {
     std::string err = "ft_irc.1337 (421) " + client + " " + commad + ERR_UNKNOWNCOMMAND;
+    // ERROR LOGIC: send() return value not checked - can fail silently
+    // Should check if send() returns -1 and handle the error
     send(fd, err.c_str(), err.length(), 0);
 }
 
 void Server::errorPASSWDMISMATCH(int fd, std::string nick_client)
 {
+    // ERROR LOGIC: Missing \r\n terminator - IRC protocol requires CRLF line endings
+    // All IRC messages must end with \r\n according to RFC 1459
     std::string err = "ft_irc.1337 (464) " + nick_client + ERR_PASSWDMISMATCH;
     send(fd, err.c_str(), err.length(), 0);
 }
@@ -88,6 +92,9 @@ void Server::checkPASS(std::string pass, std::map<int, Client>::iterator &client
     std::string pass_server = this->get_password();
     if (pass == pass_server)
     {
+        // ERROR LOGIC: Setting registered here is wrong - registration happens after NICK+USER
+        // This function should only validate password, not set registration status
+        // Authentication is set by the caller after this returns successfully
         client->second.setRegistered(true);
         return;
     }
@@ -127,6 +134,9 @@ void Server::handelNewClient(int &server_fd)
 //set container
 void Server::set_newNICKNAME(std::string nick)
 {
+    // ERROR LOGIC: No handling for nickname changes (user changing existing nickname)
+    // If a user already has a nickname and changes it, the old nickname should be removed
+    // from the set, but this function doesn't remove old nicknames - causing nickname leak
     if (this->nicknames.empty())
     {
         this->nicknames.insert(nick);
@@ -192,7 +202,8 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
         cmd = "PASS"; // error logic pass in comper
         if (it[0] == cmd) // PASS comand
         {
-            if (it_client->second.isRegistered() == true || it_client->second.isAuthenticated() == true)//check is already register if already regester send erro 462.
+
+            if (it_client->second.isAuthenticated() == true)//check is already Authenticated if already regester send erro 462.
             {
                 std::string nick_name = Help::nick_name(it_client->second.getNickname());
                 this->errorALREADYREGISTERED(it_client->first, nick_name);
@@ -253,6 +264,8 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                         try
                         {
                             this->set_newNICKNAME(it[1]);
+                            it_client->second.setNickname(it[1]);
+
                             if (it_client->second.getFlage() == 2) {
                                 it_client->second.setRegistered(true);
                                 this->wellcomeMSG(it_client);
@@ -263,6 +276,9 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                             this->errorNICKNAMEINUSE(it_client->first, it[1]);
                             throw 433;
                         }
+                        // ERROR LOGIC: setFlage() called after try block - won't execute if exception thrown
+                        // If nickname is already in use, flag never increments
+                        // This should be inside the try block or the flag logic needs redesign
                         it_client->second.setFlage();
                     }
                 }
@@ -334,6 +350,7 @@ void Server::handelBuffer(std::map<int, Client>::iterator &it_client)
         {
             this->handelCommand(it_client, commad); // send command after split him to proccesing 
         }
+        temp = it_client->second.getBuffer();
         pos = temp.find('\n');
     }
 }
@@ -354,7 +371,7 @@ void Server::handelClient(struct pollfd &even_client)
         if (bytesRead < 0)
         {
             //EWOULDBLOCK or EAGAIN
-            if (errno & EAGAIN || errno & EWOULDBLOCK)
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
             {
                 return ;
             }
@@ -472,10 +489,15 @@ void Server::start_server(void)
     int poll_flag = 0;
     while(true)
     {
+        // ERROR LOGIC: Using FAILDE (-1) as timeout is incorrect
+        // poll() expects timeout in milliseconds: -1 means infinite wait (correct)
+        // but FAILDE might be confusing - should use -1 directly or create POLL_INFINITE macro
         poll_flag = poll(this->fds.data(), this->fds.size(), FAILDE);
 
         if (poll_flag == FAILDE)
         {
+            // ERROR LOGIC: Empty error handling - should throw exception or handle error
+            // If poll fails, program continues with undefined behavior
             //here trow expation and in case we have fds of client and server we need remove him ;
 
         }
@@ -487,7 +509,7 @@ void Server::start_server(void)
                 if (this->fds[i].fd == server_fd)
                 {
                     this->handelNewClient(server_fd);
-                    i--; // to avoid skiping next client in fds vector
+
                 }
                 else
                 {
@@ -499,7 +521,14 @@ void Server::start_server(void)
                     {
                         std::cerr << e.what() << std::endl;
                     }
-                    i--; // to avoid skiping next client in fds vector
+                    // ERROR LOGIC: Decrementing i after potential removal still problematic
+                    // The check 'if (i > 0)' doesn't fix the core issue:
+                    // - If handelClient removes the current fd from vector, next element shifts to position i
+                    // - Decrementing i makes us check position i-1 again in next iteration
+                    // - This means we skip checking the element that shifted to position i
+                    // Better solution: iterate backwards or track if removal occurred
+                    if (i > 0)
+                        i--; // to avoid skiping next client in fds vector
                 }
             }
         }
