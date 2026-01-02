@@ -17,13 +17,13 @@
 
 //error Server
 #define FAILDE -1  
-#define ERR_PASSWDMISMATCH " :Password incorrect.";
+#define ERR_PASSWDMISMATCH " :Password incorrect."
 #define ERR_UNKNOWNCOMMAND " :Unknown command."
-#define ERR_NEEDMOREPARAMS " :Not enough parameters"
-#define ERR_ALREADYREGISTERED " :You may not reregister"
-#define ERR_NICKNAMEINUSE " :Nickname is already in use"
-#define ERR_NONICKNAMEGIVEN " :No nickname given"
-#define ERR_ERRONEUSNICKNAME " :Erroneus nickname"
+#define ERR_NEEDMOREPARAMS " :Not enough parameters."
+#define ERR_ALREADYREGISTERED " :You may not reregister."
+#define ERR_NICKNAMEINUSE " :Nickname is already in use."
+#define ERR_NONICKNAMEGIVEN " :No nickname given."
+#define ERR_ERRONEUSNICKNAME " :Erroneus nickname."
 
 
 class Server
@@ -44,7 +44,7 @@ class Server
         void start_server(void);
 
         //set Containers
-            void set_newNICKNAME(std::string nickname);
+            void set_newNICKNAMEs(std::string nickname , std::string old);
         //opt set_sockopt 
             int * get_option_sockopt(void) const;
             void set_option_sockopt(int opt);      

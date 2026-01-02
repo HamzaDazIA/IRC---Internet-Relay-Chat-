@@ -13,9 +13,6 @@ int Server::get_port(void) const{
 }
 
 
-
-
-
 std::string Server::get_password() const
 {
     return this->password;
@@ -40,48 +37,46 @@ void Server::fd_to_NonBlocking(int &fd)
 //error part 
 void Server::errorUNKNOWNCOMMAND(int fd, std::string &client, std::string commad)
 {
-    std::string err = "ft_irc.1337 (421) " + client + " " + commad + ERR_UNKNOWNCOMMAND;
-    // ERROR LOGIC: send() return value not checked - can fail silently
-    // Should check if send() returns -1 and handle the error
+    std::string err = "ft_irc.1337 (421) " + client + " " + commad + ERR_UNKNOWNCOMMAND + "\r\n";
+
     send(fd, err.c_str(), err.length(), 0);
 }
 
 void Server::errorPASSWDMISMATCH(int fd, std::string nick_client)
 {
-    // ERROR LOGIC: Missing \r\n terminator - IRC protocol requires CRLF line endings
-    // All IRC messages must end with \r\n according to RFC 1459
-    std::string err = "ft_irc.1337 (464) " + nick_client + ERR_PASSWDMISMATCH;
+
+    std::string err = "ft_irc.1337 (464) " + nick_client + ERR_PASSWDMISMATCH + "\r\n";
     send(fd, err.c_str(), err.length(), 0);
 }
 
 void Server::errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string comand)
 {
-    std::string err = "ft_irc.1337 (461) " + nick_client + " " + comand + ERR_NEEDMOREPARAMS;
+    std::string err = "ft_irc.1337 (461) " + nick_client + " " + comand + ERR_NEEDMOREPARAMS + "\r\n";
     send(fd, err.c_str(), err.length(), 0);
 }
 
 void Server::errorALREADYREGISTERED(int fd, std::string nick_client)
 {
-    std::string err = "ft_irc.1337 (462) " + nick_client + ERR_ALREADYREGISTERED;
+    std::string err = "ft_irc.1337 (462) " + nick_client + ERR_ALREADYREGISTERED + "\r\n";
     send (fd, err.c_str(), err.length(), 0);
 }
 
 void Server::errorNICKNAMEINUSE(int fd, std::string nick_clint)
 {
-    std::string err = "ft_irc.1337 (433) " + nick_clint + ERR_NICKNAMEINUSE;
+    std::string err = "ft_irc.1337 (433) " + nick_clint + ERR_NICKNAMEINUSE + "\r\n";
     send(fd, err.c_str(), err.length(), 0);
 }
 
 void Server::errorNONICKNAMEGIVEN(int fd, std::string nick_client)
 {
-    std::string err = "ft_irc.1337 (461) " + nick_client + ERR_NONICKNAMEGIVEN;
+    std::string err = "ft_irc.1337 (461) " + nick_client + ERR_NONICKNAMEGIVEN + "\r\n";
     send(fd, err.c_str(), err.length(), 0);
 }
 
 void Server::errorERRONEUSNICKNAME(int fd, std::string nick_client)
 {
-    std::string err = "ft_irc.1337 (432) " + nick_client + ERR_ERRONEUSNICKNAME;
-    send(fd, err.c_str(), err.length(), 0);
+    std::string err = "ft_irc.1337 (432) " + nick_client + ERR_ERRONEUSNICKNAME + "\r\n";
+    send(fd, err.c_str(), err.length(), 0); 
 }
 
 
@@ -132,29 +127,19 @@ void Server::handelNewClient(int &server_fd)
 }
 
 //set container
-void Server::set_newNICKNAME(std::string nick)
+void Server::set_newNICKNAMEs(std::string nick , std::string old)
 {
-    // ERROR LOGIC: No handling for nickname changes (user changing existing nickname)
-    // If a user already has a nickname and changes it, the old nickname should be removed
-    // from the set, but this function doesn't remove old nicknames - causing nickname leak
-    if (this->nicknames.empty())
+
+    if (this->nicknames.find(nick) != this->nicknames.end())
     {
-        this->nicknames.insert(nick);
-        return;
+        throw 433;
     }
-    else
+    if (!old.empty())
     {
-        std::set<std::string>::iterator it = this->nicknames.find(nick);
-        if (it == this->nicknames.end())
-        {
-            this->nicknames.insert(nick);
-            return;
-        }
-        else
-        {
-            throw 433;
-        }
+        this->nicknames.erase(old);
     }
+    this->nicknames.insert(nick);
+    
 }
 
 //handel client;
@@ -263,10 +248,13 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                     {
                         try
                         {
-                            this->set_newNICKNAME(it[1]);
+                            std::string oldNickname = it_client->second.getNickname();
+                            this->set_newNICKNAMEs(it[1], oldNickname);
                             it_client->second.setNickname(it[1]);
 
-                            if (it_client->second.getFlage() == 2) {
+                            it_client->second.setFlage();
+                            if (it_client->second.getFlage() == 2) 
+                            {
                                 it_client->second.setRegistered(true);
                                 this->wellcomeMSG(it_client);
                             }
@@ -276,10 +264,7 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                             this->errorNICKNAMEINUSE(it_client->first, it[1]);
                             throw 433;
                         }
-                        // ERROR LOGIC: setFlage() called after try block - won't execute if exception thrown
-                        // If nickname is already in use, flag never increments
-                        // This should be inside the try block or the flag logic needs redesign
-                        it_client->second.setFlage();
+
                     }
                 }
             }
@@ -489,17 +474,12 @@ void Server::start_server(void)
     int poll_flag = 0;
     while(true)
     {
-        // ERROR LOGIC: Using FAILDE (-1) as timeout is incorrect
-        // poll() expects timeout in milliseconds: -1 means infinite wait (correct)
-        // but FAILDE might be confusing - should use -1 directly or create POLL_INFINITE macro
-        poll_flag = poll(this->fds.data(), this->fds.size(), FAILDE);
+
+        poll_flag = poll(this->fds.data(), this->fds.size(), -1);
 
         if (poll_flag == FAILDE)
         {
-            // ERROR LOGIC: Empty error handling - should throw exception or handle error
-            // If poll fails, program continues with undefined behavior
-            //here trow expation and in case we have fds of client and server we need remove him ;
-
+            throw std::runtime_error("Error poll: Failde polling fds.");
         }
         for (size_t i = 0 ; i < this->fds.size(); i++)
         {
@@ -521,14 +501,6 @@ void Server::start_server(void)
                     {
                         std::cerr << e.what() << std::endl;
                     }
-                    // ERROR LOGIC: Decrementing i after potential removal still problematic
-                    // The check 'if (i > 0)' doesn't fix the core issue:
-                    // - If handelClient removes the current fd from vector, next element shifts to position i
-                    // - Decrementing i makes us check position i-1 again in next iteration
-                    // - This means we skip checking the element that shifted to position i
-                    // Better solution: iterate backwards or track if removal occurred
-                    if (i > 0)
-                        i--; // to avoid skiping next client in fds vector
                 }
             }
         }
