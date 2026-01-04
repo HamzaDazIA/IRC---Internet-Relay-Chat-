@@ -1,5 +1,9 @@
 #include "Server.hpp"
+#include "Commands/NICK/Nick.hpp"
+#include "Commands/USER/User.hpp"
+#include "Commands/PASS/Pass.hpp"
 
+Server::Server(){}
 Server::Server(int port, std::string password)
 {
     this->port = port;
@@ -34,71 +38,90 @@ void Server::fd_to_NonBlocking(int &fd)
 
 }
 
-//error part 
-void Server::errorUNKNOWNCOMMAND(int fd, std::string &client, std::string commad)
+//=== ERROR HANDLING IMPLEMENTATIONS ===
+
+// Send 421 ERR_UNKNOWNCOMMAND - Command not recognized by server
+// Format: :server 421 <nick> <command> :Unknown command
+void Server::errorUNKNOWNCOMMAND(int fd, std::string client, std::string commad)
 {
     std::string err = "ft_irc.1337 (421) " + client + " " + commad + ERR_UNKNOWNCOMMAND + "\r\n";
-
+    // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0);
 }
 
+// Send 464 ERR_PASSWDMISMATCH - Password authentication failed
+// This is sent when PASS command has wrong password or when commands sent before PASS
 void Server::errorPASSWDMISMATCH(int fd, std::string nick_client)
 {
-
     std::string err = "ft_irc.1337 (464) " + nick_client + ERR_PASSWDMISMATCH + "\r\n";
+    // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0);
 }
 
+// Send 461 ERR_NEEDMOREPARAMS - Command missing required parameters
+// Format: :server 461 <nick> <command> :Not enough parameters
 void Server::errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string comand)
 {
     std::string err = "ft_irc.1337 (461) " + nick_client + " " + comand + ERR_NEEDMOREPARAMS + "\r\n";
+    // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0);
 }
 
+// Send 462 ERR_ALREADYREGISTERED - Client trying to re-register after authentication
+// Sent when client sends PASS or USER after already being registered
 void Server::errorALREADYREGISTERED(int fd, std::string nick_client)
 {
     std::string err = "ft_irc.1337 (462) " + nick_client + ERR_ALREADYREGISTERED + "\r\n";
+    // Send error message to client socket
     send (fd, err.c_str(), err.length(), 0);
 }
 
+// Send 433 ERR_NICKNAMEINUSE - Requested nickname already taken
+// Client must choose a different nickname
 void Server::errorNICKNAMEINUSE(int fd, std::string nick_clint)
 {
     std::string err = "ft_irc.1337 (433) " + nick_clint + ERR_NICKNAMEINUSE + "\r\n";
+    // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0);
 }
 
+// Send 431 ERR_NONICKNAMEGIVEN - NICK command sent without nickname parameter
+// NOTE: Currently using wrong error code (461 instead of 431) - should be fixed
 void Server::errorNONICKNAMEGIVEN(int fd, std::string nick_client)
 {
     std::string err = "ft_irc.1337 (461) " + nick_client + ERR_NONICKNAMEGIVEN + "\r\n";
+    // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0);
 }
 
+// Send 432 ERR_ERRONEUSNICKNAME - Nickname contains invalid characters
+// Nickname must start with letter and contain only valid IRC characters
 void Server::errorERRONEUSNICKNAME(int fd, std::string nick_client)
 {
     std::string err = "ft_irc.1337 (432) " + nick_client + ERR_ERRONEUSNICKNAME + "\r\n";
+    // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0); 
 }
 
-
-// handel new CLient
-
-void Server::checkPASS(std::string pass, std::map<int, Client>::iterator &client)
+void Server::set_newNICKNAMEs(std::string nick , std::string old)
 {
-    std::string pass_server = this->get_password();
-    if (pass == pass_server)
+    // Check if nickname already taken by another client
+    if (this->nicknames.find(nick) != this->nicknames.end())
     {
-        // ERROR LOGIC: Setting registered here is wrong - registration happens after NICK+USER
-        // This function should only validate password, not set registration status
-        // Authentication is set by the caller after this returns successfully
-        client->second.setRegistered(true);
-        return;
+        throw 433; // ERR_NICKNAMEINUSE - nickname collision
     }
-    else
+    // Remove old nickname if client is changing nickname
+    if (!old.empty())
     {
-        throw::std::logic_error("wrong password. Disconnecting.");
+        this->nicknames.erase(old);
     }
+    // Register the new nickname
+    this->nicknames.insert(nick);
     
 }
+
+
+
 void Server::handelNewClient(int &server_fd)
 {
 
@@ -126,50 +149,19 @@ void Server::handelNewClient(int &server_fd)
 
 }
 
-//set container
-void Server::set_newNICKNAMEs(std::string nick , std::string old)
-{
-
-    if (this->nicknames.find(nick) != this->nicknames.end())
-    {
-        throw 433;
-    }
-    if (!old.empty())
-    {
-        this->nicknames.erase(old);
-    }
-    this->nicknames.insert(nick);
-    
-}
-
-//handel client;
-
-bool Server::parsingNICK(std::string &nick)
-{
-
-    if (isdigit(nick[0]))
-        return false;
-
-
-    std::string allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789[]\\`_^{|}-";
-
-
-    for (size_t i = 0; i < nick.size(); i++)
-    {
-        if (allowed.find(nick[i]) == std::string::npos)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::string commad)
 {
     std::vector<std::string> commandss = Help::split_command(commad);
     std::string cmd = "CAP";
     std::vector<std::string>::iterator it = commandss.begin();
+    Nick nick;
+    User user;
+    Pass pass;
+    
+    nick.setServer(this);
+    user.setServer(this);
+    pass.setServer(this);
+    
     if (commandss.size() > 0)
     {
         if (it[0] ==  cmd)
@@ -184,139 +176,22 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
             std::cout << "Send 421 to clinet " << it_client->first << ": " << cmd << std::endl;
             return ; 
         }
-        cmd = "PASS"; // error logic pass in comper
-        if (it[0] == cmd) // PASS comand
+        if (nick.execute(commandss, it_client) == 0)
+            return;
+        else if (pass.execute(commandss, it_client) == 0)
+            return ;
+        else if (user.execute(commandss, it_client) == 0)
+            return;
+        else
         {
+            // Unknown command - should send 421 ERR_UNKNOWNCOMMAND here
+            // TODO: Implement error handling for unrecognized commands
+            this->errorUNKNOWNCOMMAND(it_client->first, it_client->second.getNickname(), it[0]);
+            std::cout << "Send 421 to clinet " << it_client->first << ": " << it[0] << std::endl;
+            return ;
 
-            if (it_client->second.isAuthenticated() == true)//check is already Authenticated if already regester send erro 462.
-            {
-                std::string nick_name = Help::nick_name(it_client->second.getNickname());
-                this->errorALREADYREGISTERED(it_client->first, nick_name);
-
-                std::cout << "Send 462 to client " << it_client->first << ": " << cmd << "\"" << ERR_ALREADYREGISTERED << "\"" << std::endl;
-                return;
-            } 
-
-            if (commandss.size() > 1)
-            {
-                try
-                {
-                    this->checkPASS(it[1], it_client);
-                    it_client->second.setAuthenticated(true);
-
-                }
-                catch(const std::exception& e)
-                {
-                    std::string nick_name = Help::nick_name(it_client->second.getNickname());
-                    
-                    this->errorPASSWDMISMATCH(it_client->first, nick_name);
-                    std::cout << "Send 464 to client " <<  it_client->first << " " << e.what();
-                    throw 464;
-                }
-                
-            }
-            else
-            {
-                std::string nick_name = Help::nick_name(it_client->second.getNickname());
-                this->errorNEEDMOREPARAMS(it_client->first, nick_name, cmd);
-
-                std::cout << "Send 461 to client " << it_client->first << ": " << cmd << "\"" << ERR_NEEDMOREPARAMS << "\"" << std::endl;
-                return;
-            }
-            
         }
-        cmd = "NICK";
-        if (it[0] == cmd) // NICK COMAND
-        {
-            if (it_client->second.isAuthenticated() == true )
-            {
-                if (commandss.size() < 2)
-                {
-                    std::string nick = Help::nick_name(it_client->second.getNickname());
-                    this->errorNONICKNAMEGIVEN(it_client->first, nick);
-                    throw 431;
-                }
-                else
-                {
-                    bool status = this->parsingNICK(it[1]);
-                    if (status == false)
-                    {
-                        this->errorERRONEUSNICKNAME(it_client->first, it[1]);
-                        throw 432;
-                    }
-                    else
-                    {
-                        try
-                        {
-                            std::string oldNickname = it_client->second.getNickname();
-                            this->set_newNICKNAMEs(it[1], oldNickname);
-                            it_client->second.setNickname(it[1]);
-
-                            it_client->second.setFlage();
-                            if (it_client->second.getFlage() == 2) 
-                            {
-                                it_client->second.setRegistered(true);
-                                this->wellcomeMSG(it_client);
-                            }
-                        }
-                        catch(int e)
-                        {
-                            this->errorNICKNAMEINUSE(it_client->first, it[1]);
-                            throw 433;
-                        }
-
-                    }
-                }
-            }
-            else
-            {
-                std::string nick_name = Help::nick_name(it_client->second.getNickname());
-                this->errorPASSWDMISMATCH(it_client->first, nick_name);
-                throw 464;
-            }
-        }
-        cmd = "USER";
-        if (it[0] == "USER")
-        {
-            if (it_client->second.isAuthenticated() == true)
-            {
-                if (commandss.size() < 5)
-                {
-                    std::string nick = Help::nick_name(it_client->second.getNickname());
-                    this->errorNEEDMOREPARAMS(it_client->first, nick, cmd);
-                    throw 461;
-                }
-                else
-                {
-                    if (it_client->second.getFlage() == 2)
-                    {
-                        std::string nick = Help::nick_name(it_client->second.getNickname());
-                        this->errorALREADYREGISTERED(it_client->first, nick);
-                        std::cout << "Send 462 to client " << it_client->first << ": " << cmd << "\"" << ERR_ALREADYREGISTERED << "\"" << std::endl;
-                        return ;
-                    }
-                    else
-                    {
-                        it_client->second.setUsername(it[1]);
-                        it_client->second.setRealname(it[4]);
-                        it_client->second.setFlage();
-                        if (it_client->second.getFlage() == 2)
-                        {
-                            it_client->second.setRegistered(true);
-                            this->wellcomeMSG(it_client);
-                        }
-                        
-                    }
-                }
-            }
-            else
-            {
-                std::string nick_name = Help::nick_name(it_client->second.getNickname());
-                this->errorPASSWDMISMATCH(it_client->first, nick_name);
-                throw 464;
-            }
-        }
-    }
+    }  
 
     
 }
@@ -355,10 +230,11 @@ void Server::handelClient(struct pollfd &even_client)
 
         if (bytesRead < 0)
         {
-            //EWOULDBLOCK or EAGAIN
+            // Handle non-blocking socket errors
+            // EWOULDBLOCK or EAGAIN means no data available yet (not an error for non-blocking)
             if (errno == EAGAIN || errno == EWOULDBLOCK)
             {
-                return ;
+                return ; // Normal for non-blocking sockets, try again later
             }
             else
             {
@@ -378,7 +254,7 @@ void Server::handelClient(struct pollfd &even_client)
         }
         else if (bytesRead == 0)
         {
-            // Client disconnected
+            // Client disconnected gracefully (closed connection)
             this->clients.erase(it);
             for (std::vector<struct pollfd>::iterator p_it = this->fds.begin(); p_it != this->fds.end(); ++p_it)
             {
@@ -402,13 +278,16 @@ void Server::handelClient(struct pollfd &even_client)
     }
     try
     {
-        this->handelBuffer(it); // here we check if client send all command by tirminited /r /n
+        // Process complete commands from buffer (terminated by \r\n)
+        this->handelBuffer(it);
         
     }
-    catch(int err)
+    catch(int err) // Catch integer exceptions thrown by command handlers
     {
+        // 464 ERR_PASSWDMISMATCH - Wrong password, disconnect client
         if (err == 464)
         {
+            // Remove client from all data structures
             this->clients.erase(it);
             for (std::vector<struct pollfd>::iterator p_it = this->fds.begin(); p_it != this->fds.end(); ++p_it)
             {
@@ -418,12 +297,15 @@ void Server::handelClient(struct pollfd &even_client)
                     break;
                 }
             }
-            close(even_client.fd);
+            close(even_client.fd); // Close socket
         }
+        // 431 ERR_NONICKNAMEGIVEN - NICK command without parameter
         if (err == 431)
             std::cout << "Send 431 to client " << even_client.fd << ERR_NONICKNAMEGIVEN;
+        // 432 ERR_ERRONEUSNICKNAME - Invalid nickname format
         if (err == 432)
             std::cout << "Send 432 to client " << even_client.fd << ERR_ERRONEUSNICKNAME;
+        // 433 ERR_NICKNAMEINUSE - Nickname already taken
         if (err == 433)
             std::cout << "Send 433 to client " << even_client.fd << ERR_NICKNAMEINUSE;
     }
@@ -445,7 +327,7 @@ void Server::start_server(void)
     this->serverNAME = "ft_irc.1337";
     this->serverVERSION = "0.1";
     int opt = 1;
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt , sizeof(*(get_option_sockopt())));
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt , sizeof(opt));
 
     struct sockaddr_in addr = {};
     addr.sin_family = AF_INET; // type of IP is IPv4 

@@ -1,6 +1,6 @@
 
 
-SRC =  Server/main.cpp Client/Client.cpp Server/Server.cpp helper_functions/help.cpp 
+SRC =  Server/main.cpp Client/Client.cpp Server/Server.cpp helper_functions/help.cpp Server/Commands/PASS/Pass.cpp Server/Commands/NICK/Nick.cpp Server/Commands/USER/User.cpp Server/Commands/Command.cpp 
 NAME = DEmoserver
 OBJ = $(SRC:.cpp=.o)
 CXX = c++
