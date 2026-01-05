@@ -73,18 +73,23 @@ int Nick::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
                         server->set_newNICKNAMEs(it[1], oldNickname);
                         it_client->second.setNickname(it[1]);
 
-                        it_client->second.setFlage();
-                        if (it_client->second.getFlage() == 2)
+                        if (it_client->second.getNickname() != "" && it_client->second.getUsername() != "")
                         {
-                            it_client->second.setRegistered(true);
-                            server->wellcomeMSG(it_client);
+                            if (it_client->second.isRegistered() == false)
+                            {
+                                it_client->second.setRegistered(true);
+                                server->wellcomeMSG(it_client);
+                            }
                         }
                     }
                     catch (int e)
                     {
                         // 433 ERR_NICKNAMEINUSE - Nickname already taken by another client
-                        server->errorNICKNAMEINUSE(it_client->first, it[1]);
-                        throw 433;
+                        if (e == 433)
+                        {
+                            server->errorNICKNAMEINUSE(it_client->first, it[1]);
+                            throw 433;
+                        }
                     }
                 }
             }

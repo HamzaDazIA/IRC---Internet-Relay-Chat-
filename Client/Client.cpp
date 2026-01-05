@@ -1,7 +1,7 @@
 #include "Client.hpp"
 
 
-Client::Client() : fd(-1), registration(false), authenticated(false) , flage(0) {}
+Client::Client() : fd(-1), registration(false), authenticated(false) {}
 Client::~Client()
 {
 }
@@ -79,20 +79,5 @@ void Client::setAuthenticated(bool auth)
 void Client::erase_buffer(size_t start , size_t end)
 {
     this->buffer.erase(start , end);
-}
-
-void Client::setFlage()
-{
-
-    if (flage > 2)
-    {
-        return;
-    }
-    flage++;
-}
-
-short Client::getFlage() const
-{
-    return flage;
 }
 

@@ -9,16 +9,16 @@
 #include <fcntl.h>
 #include <cstring>
 #include <errno.h>
-#define FAILDE -1  
+#define FAILED -1  
 // ============================================
 // STEP 1: Make socket non-blocking
 // ============================================
 bool setNonBlocking(int fd)
 {
     int flags = fcntl(fd, F_GETFL, 0);
-    if (flags == FAILDE)
+    if (flags == FAILED)
         return false;
-    return fcntl(fd, F_SETFL, flags | O_NONBLOCK) != FAILDE;
+    return fcntl(fd, F_SETFL, flags | O_NONBLOCK) != FAILED;
 }
 
 // ============================================
@@ -27,10 +27,10 @@ bool setNonBlocking(int fd)
 int createServerSocket(int port)
 {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd == FAILDE)
+    if (server_fd == FAILED)
     {
         std::cerr << "Socket creation failed" << std::endl;
-        return FAILDE;
+        return FAILED;
     }
 
     // Allow address reuse (important for testing!)
@@ -42,7 +42,7 @@ int createServerSocket(int port)
     {
         std::cerr << "Failed to set non-blocking" << std::endl;
         close(server_fd);
-        return FAILDE;
+        return FAILED;
     }
 
     // Bind to address
@@ -52,19 +52,19 @@ int createServerSocket(int port)
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    if (bind(server_fd, (struct sockaddr *)&addr, sizeof(addr)) == FAILDE)
+    if (bind(server_fd, (struct sockaddr *)&addr, sizeof(addr)) == FAILED)
     {
         std::cerr << "Bind failed" << std::endl;
         close(server_fd);
-        return FAILDE;
+        return FAILED;
     }
 
     // Listen with backlog of 10
-    if (listen(server_fd, 10) == FAILDE)
+    if (listen(server_fd, 10) == FAILED)
     {
         std::cerr << "Listen failed" << std::endl;
         close(server_fd);
-        return FAILDE;
+        return FAILED;
     }
 
     std::cout << "Server listening on port " << port << std::endl;
@@ -80,10 +80,10 @@ void handleNewConnection(int server_fd, std::vector<struct pollfd> &fds,
     struct sockaddr_in clientAddr;
     socklen_t clientLen = sizeof(clientAddr);
 
-    // Non-blocking accept - might return FAILDE if no client waiting
+    // Non-blocking accept - might return FAILED if no client waiting
     int client_fd = accept(server_fd, (struct sockaddr *)&clientAddr, &clientLen);
 
-    if (client_fd == FAILDE)
+    if (client_fd == FAILED)
     {
         if (errno != EAGAIN && errno != EWOULDBLOCK)
         {
@@ -129,7 +129,7 @@ void handleClientData(int client_fd, std::vector<struct pollfd> &fds, size_t ind
     // Non-blocking read - returns immediately
     int bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
-    if (bytes_read == FAILDE)
+    if (bytes_read == FAILED)
     {
         // No data available right now (shouldn't happen after poll, but safe!)
         if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -185,7 +185,7 @@ int main()
 
     // Create server socket
     int server_fd = createServerSocket(PORT);
-    if (server_fd == FAILDE)
+    if (server_fd == FAILED)
     {
         return 1;
     }
@@ -209,9 +209,9 @@ int main()
     while (true)
     {
 
-        int poll_count = poll(fds.data(), fds.size(), FAILDE);
+        int poll_count = poll(fds.data(), fds.size(), FAILED);
 
-        if (poll_count == FAILDE)
+        if (poll_count == FAILED)
         {
             std::cerr << "Poll failed" << std::endl;
             break;

@@ -13,7 +13,7 @@ class Client
         bool registration;
         std::string buffer;  // Partial messages
         bool authenticated;
-        short flage; // in authenticated is need client set nickname and username if ==2 is do this tow steps 
+       
     public:
         Client();
         ~Client();
@@ -34,8 +34,7 @@ class Client
             void setRegistered(bool reg);
             bool isAuthenticated() const;
             void setAuthenticated(bool auth);
-            void setFlage();
-            short getFlage() const;
+
 };
 
 #endif 

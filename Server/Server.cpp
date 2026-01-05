@@ -26,14 +26,14 @@ void Server::fd_to_NonBlocking(int &fd)
 {
     int status = fcntl(fd, F_GETFL, 0);
 
-    if (status == FAILDE )
+    if (status == FAILED )
     {
-        throw std::runtime_error("Error fcntl: Failde Get file status flags.");
+        throw std::runtime_error("Error fcntl: FAILED Get file status flags.");
     }
 
-    if (fcntl(fd, F_SETFL, status | O_NONBLOCK) == FAILDE)
+    if (fcntl(fd, F_SETFL, status | O_NONBLOCK) == FAILED)
     {
-        throw std::runtime_error("Error fnctl: Failde set file  NON-BLOCK");
+        throw std::runtime_error("Error fnctl: FAILED set file  NON-BLOCK");
     }
 
 }
@@ -44,7 +44,7 @@ void Server::fd_to_NonBlocking(int &fd)
 // Format: :server 421 <nick> <command> :Unknown command
 void Server::errorUNKNOWNCOMMAND(int fd, std::string client, std::string commad)
 {
-    std::string err = "ft_irc.1337 (421) " + client + " " + commad + ERR_UNKNOWNCOMMAND + "\r\n";
+    std::string err = ":ft_irc.1337 421 " + client + " " + commad + ERR_UNKNOWNCOMMAND + "\r\n";
     // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0);
 }
@@ -53,7 +53,7 @@ void Server::errorUNKNOWNCOMMAND(int fd, std::string client, std::string commad)
 // This is sent when PASS command has wrong password or when commands sent before PASS
 void Server::errorPASSWDMISMATCH(int fd, std::string nick_client)
 {
-    std::string err = "ft_irc.1337 (464) " + nick_client + ERR_PASSWDMISMATCH + "\r\n";
+    std::string err = ":ft_irc.1337 464 " + nick_client + ERR_PASSWDMISMATCH + "\r\n";
     // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0);
 }
@@ -62,7 +62,7 @@ void Server::errorPASSWDMISMATCH(int fd, std::string nick_client)
 // Format: :server 461 <nick> <command> :Not enough parameters
 void Server::errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string comand)
 {
-    std::string err = "ft_irc.1337 (461) " + nick_client + " " + comand + ERR_NEEDMOREPARAMS + "\r\n";
+    std::string err = ":ft_irc.1337 461 " + nick_client + " " + comand + ERR_NEEDMOREPARAMS + "\r\n";
     // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0);
 }
@@ -71,7 +71,7 @@ void Server::errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string co
 // Sent when client sends PASS or USER after already being registered
 void Server::errorALREADYREGISTERED(int fd, std::string nick_client)
 {
-    std::string err = "ft_irc.1337 (462) " + nick_client + ERR_ALREADYREGISTERED + "\r\n";
+    std::string err = ":ft_irc.1337 462 " + nick_client + ERR_ALREADYREGISTERED + "\r\n";
     // Send error message to client socket
     send (fd, err.c_str(), err.length(), 0);
 }
@@ -80,7 +80,7 @@ void Server::errorALREADYREGISTERED(int fd, std::string nick_client)
 // Client must choose a different nickname
 void Server::errorNICKNAMEINUSE(int fd, std::string nick_clint)
 {
-    std::string err = "ft_irc.1337 (433) " + nick_clint + ERR_NICKNAMEINUSE + "\r\n";
+    std::string err = ":ft_irc.1337 433 " + nick_clint + ERR_NICKNAMEINUSE + "\r\n";
     // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0);
 }
@@ -89,7 +89,7 @@ void Server::errorNICKNAMEINUSE(int fd, std::string nick_clint)
 // NOTE: Currently using wrong error code (461 instead of 431) - should be fixed
 void Server::errorNONICKNAMEGIVEN(int fd, std::string nick_client)
 {
-    std::string err = "ft_irc.1337 (461) " + nick_client + ERR_NONICKNAMEGIVEN + "\r\n";
+    std::string err = ":ft_irc.1337 431 " + nick_client + ERR_NONICKNAMEGIVEN + "\r\n";
     // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0);
 }
@@ -98,7 +98,7 @@ void Server::errorNONICKNAMEGIVEN(int fd, std::string nick_client)
 // Nickname must start with letter and contain only valid IRC characters
 void Server::errorERRONEUSNICKNAME(int fd, std::string nick_client)
 {
-    std::string err = "ft_irc.1337 (432) " + nick_client + ERR_ERRONEUSNICKNAME + "\r\n";
+    std::string err = ":ft_irc.1337 432 " + nick_client + ERR_ERRONEUSNICKNAME + "\r\n";
     // Send error message to client socket
     send(fd, err.c_str(), err.length(), 0); 
 }
@@ -130,9 +130,9 @@ void Server::handelNewClient(int &server_fd)
     int newClient_fd = accept(server_fd, (sockaddr *)&newClient, &clinetlen);
 
     std::cout << "New client connected: " << newClient_fd << std::endl;
-    if (newClient_fd == FAILDE)
+    if (newClient_fd == FAILED)
     {
-        throw std::runtime_error ("Error ACCEPT: Failde accept");
+        throw std::runtime_error ("Error ACCEPT: FAILED accept");
     }
     this->fd_to_NonBlocking(newClient_fd);
 
@@ -238,6 +238,7 @@ void Server::handelClient(struct pollfd &even_client)
             }
             else
             {
+                /*
                 close (even_client.fd);
                 this->clients.erase(it);
                 for (std::vector<struct pollfd>::iterator i_itr = this->fds.begin() ; i_itr != this->fds.end() ; i_itr++)
@@ -248,13 +249,18 @@ void Server::handelClient(struct pollfd &even_client)
                         break;
                     }
                 }
+                
+                throw std::runtime_error("Error recv: FAILED to receive data from client.");
 
-                throw std::runtime_error("Error recv: Failde to receive data from client.");
+                */
+               std::cout << "Error receiving data from client " << even_client.fd << std::endl;
+               throw -1;
             }
         }
         else if (bytesRead == 0)
         {
             // Client disconnected gracefully (closed connection)
+            /*
             this->clients.erase(it);
             for (std::vector<struct pollfd>::iterator p_it = this->fds.begin(); p_it != this->fds.end(); ++p_it)
             {
@@ -265,6 +271,9 @@ void Server::handelClient(struct pollfd &even_client)
                 }
             }
             close(even_client.fd);
+            */
+           std::cout << "Client " << even_client.fd << " disconnected." << std::endl;
+           throw -1;
         }
         else
         {
@@ -287,6 +296,7 @@ void Server::handelClient(struct pollfd &even_client)
         // 464 ERR_PASSWDMISMATCH - Wrong password, disconnect client
         if (err == 464)
         {
+            /*
             // Remove client from all data structures
             this->clients.erase(it);
             for (std::vector<struct pollfd>::iterator p_it = this->fds.begin(); p_it != this->fds.end(); ++p_it)
@@ -298,6 +308,9 @@ void Server::handelClient(struct pollfd &even_client)
                 }
             }
             close(even_client.fd); // Close socket
+            */
+           std::cout << "Disconnecting client " << even_client.fd << " due to PASSWDMISMATCH." << std::endl;
+              throw -1;
         }
         // 431 ERR_NONICKNAMEGIVEN - NICK command without parameter
         if (err == 431)
@@ -308,6 +321,8 @@ void Server::handelClient(struct pollfd &even_client)
         // 433 ERR_NICKNAMEINUSE - Nickname already taken
         if (err == 433)
             std::cout << "Send 433 to client " << even_client.fd << ERR_NICKNAMEINUSE;
+        if (err == 462)
+            std::cout << "Send 462 to client " << even_client.fd << ERR_ALREADYREGISTERED;
     }
     
 }
@@ -319,9 +334,9 @@ void Server::start_server(void)
     std::cout << "Starting server on port " << this->port << "..." << std::endl;
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (server_fd == FAILDE)
+    if (server_fd == FAILED)
     {
-        throw std::runtime_error("Error Socket : failde create socket.");
+        throw std::runtime_error("Error Socket : FAILED create socket.");
     }
 
     this->serverNAME = "ft_irc.1337";
@@ -334,17 +349,17 @@ void Server::start_server(void)
     addr.sin_port = htons(this->port); // set port number we use htons function converts the unsigned short integer hostshort from host byte order to network byte order.
     addr.sin_addr.s_addr = INADDR_ANY; // Address to accept any incoming messages.
 
-    if (bind(server_fd, (sockaddr *) (&addr), sizeof(addr)) == FAILDE )
+    if (bind(server_fd, (sockaddr *) (&addr), sizeof(addr)) == FAILED )
     {
         close(server_fd);
-        throw std::runtime_error("Error bind: Failde bind socket server.");
+        throw std::runtime_error("Error bind: FAILED bind socket server.");
     }
     
     std::cout << "Socket server binded to port " << this->port << std::endl;
-    if (listen(server_fd, SOMAXCONN) == FAILDE) // SOMAXCONN. This tells the OS: "Give me the maximum possible queue size allowed on this specific machine
+    if (listen(server_fd, SOMAXCONN) == FAILED) // SOMAXCONN. This tells the OS: "Give me the maximum possible queue size allowed on this specific machine
     {
         close(server_fd);
-        throw std::runtime_error("Error listen: Failde listing socket server.");
+        throw std::runtime_error("Error listen: FAILED listing socket server.");
     } 
 
     std::cout << "Server is listening on port " << this->port << std::endl;
@@ -359,9 +374,9 @@ void Server::start_server(void)
 
         poll_flag = poll(this->fds.data(), this->fds.size(), -1);
 
-        if (poll_flag == FAILDE)
+        if (poll_flag == FAILED)
         {
-            throw std::runtime_error("Error poll: Failde polling fds.");
+            throw std::runtime_error("Error poll: FAILED polling fds.");
         }
         for (size_t i = 0 ; i < this->fds.size(); i++)
         {
@@ -378,10 +393,38 @@ void Server::start_server(void)
                     try
                     {
                         this->handelClient(fds[i]);
-                    }
-                    catch(const std::exception& e)
+                    } 
+/*                    catch(const std::exception& e)
                     {
                         std::cerr << e.what() << std::endl;
+                    }*/
+                    catch(int err)
+                    {
+                        if (err == -1)
+                        {
+                            std::map<int, Client>::iterator it = this->clients.find(this->fds[i].fd);
+                            if (it != this->clients.end())
+                            {
+                                std::string nick = it->second.getNickname();
+                                std::set<std::string>::iterator it_nick  = this->nicknames.find(nick);
+                                if (it_nick != this->nicknames.end())
+                                {
+                                    this->nicknames.erase(it_nick);
+                                }
+                            }
+                            this->clients.erase(it);
+                            for(std::vector<struct pollfd>::iterator p_it = this->fds.begin(); p_it != this->fds.end(); ++p_it)
+                            {
+                                if (p_it->fd == this->fds[i].fd)
+                                {
+                                    close(p_it->fd);
+                                    this->fds.erase(p_it);
+                                    i--; // Adjust index after erasure
+                                    break;
+                                }
+
+                            }
+                        }
                     }
                 }
             }

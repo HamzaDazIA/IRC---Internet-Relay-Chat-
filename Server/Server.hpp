@@ -17,7 +17,7 @@
 
 //=== ERROR CODES AND MESSAGES ===
 // Return value indicating failure for system calls
-#define FAILDE -1  
+#define FAILED -1  
 
 // IRC Protocol Error Messages (RFC 1459)
 // 464 ERR_PASSWDMISMATCH - Returned when password authentication fails

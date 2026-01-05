@@ -33,7 +33,7 @@ int User::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
             else
             {
                 // Check if client already fully registered (both NICK and USER completed)
-                if (it_client->second.getFlage() == 2)
+                if (it_client->second.isRegistered() == true)
                 {
                     // 462 ERR_ALREADYREGISTERED - Can't send USER after registration complete
                     std::string nick = Help::nick_name(it_client->second.getNickname());
@@ -45,10 +45,10 @@ int User::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
                 {
                     it_client->second.setUsername(it[1]);
                     it_client->second.setRealname(it[4]);
-                    it_client->second.setFlage();
-                    if (it_client->second.getFlage() == 2)
+                    if (it_client->second.getNickname() != "" && it_client->second.getUsername() != "")
                     {
                         it_client->second.setRegistered(true);
+                        // Send welcome messages upon successful registration
                         server->wellcomeMSG(it_client);
                     }
                 }
