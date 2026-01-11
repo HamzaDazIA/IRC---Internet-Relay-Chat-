@@ -46,7 +46,11 @@ void Server::errorUNKNOWNCOMMAND(int fd, std::string client, std::string commad)
 {
     std::string err = ":ft_irc.1337 421 " + client + " " + commad + ERR_UNKNOWNCOMMAND + "\r\n";
     // Send error message to client socket
-    send(fd, err.c_str(), err.length(), 0);
+    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
+    {
+        throw std::runtime_error("Error send: FAILED sending ERR_UNKNOWNCOMMAND.");
+    }
+
 }
 
 // Send 464 ERR_PASSWDMISMATCH - Password authentication failed
@@ -55,7 +59,12 @@ void Server::errorPASSWDMISMATCH(int fd, std::string nick_client)
 {
     std::string err = ":ft_irc.1337 464 " + nick_client + ERR_PASSWDMISMATCH + "\r\n";
     // Send error message to client socket
-    send(fd, err.c_str(), err.length(), 0);
+    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
+    {
+        throw std::runtime_error("Error send: FAILED sending ERR_PASSWDMISMATCH.");
+    }
+
+
 }
 
 // Send 461 ERR_NEEDMOREPARAMS - Command missing required parameters
@@ -64,7 +73,10 @@ void Server::errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string co
 {
     std::string err = ":ft_irc.1337 461 " + nick_client + " " + comand + ERR_NEEDMOREPARAMS + "\r\n";
     // Send error message to client socket
-    send(fd, err.c_str(), err.length(), 0);
+    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
+    {
+        throw std::runtime_error("Error send: FAILED sending ERR_NEEDMOREPARAMS.");
+    }
 }
 
 // Send 462 ERR_ALREADYREGISTERED - Client trying to re-register after authentication
@@ -73,7 +85,10 @@ void Server::errorALREADYREGISTERED(int fd, std::string nick_client)
 {
     std::string err = ":ft_irc.1337 462 " + nick_client + ERR_ALREADYREGISTERED + "\r\n";
     // Send error message to client socket
-    send (fd, err.c_str(), err.length(), 0);
+    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
+    {
+        throw std::runtime_error("Error send: FAILED sending ERR_ALREADYREGISTERED.");
+    }
 }
 
 // Send 433 ERR_NICKNAMEINUSE - Requested nickname already taken
@@ -82,7 +97,10 @@ void Server::errorNICKNAMEINUSE(int fd, std::string nick_clint)
 {
     std::string err = ":ft_irc.1337 433 " + nick_clint + ERR_NICKNAMEINUSE + "\r\n";
     // Send error message to client socket
-    send(fd, err.c_str(), err.length(), 0);
+    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
+    {
+        throw std::runtime_error("Error send: FAILED sending ERR_NICKNAMEINUSE.");
+    }
 }
 
 // Send 431 ERR_NONICKNAMEGIVEN - NICK command sent without nickname parameter
@@ -91,7 +109,10 @@ void Server::errorNONICKNAMEGIVEN(int fd, std::string nick_client)
 {
     std::string err = ":ft_irc.1337 431 " + nick_client + ERR_NONICKNAMEGIVEN + "\r\n";
     // Send error message to client socket
-    send(fd, err.c_str(), err.length(), 0);
+    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
+    {
+        throw std::runtime_error("Error send: FAILED sending ERR_NONICKNAMEGIVEN.");
+    }
 }
 
 // Send 432 ERR_ERRONEUSNICKNAME - Nickname contains invalid characters
@@ -100,7 +121,10 @@ void Server::errorERRONEUSNICKNAME(int fd, std::string nick_client)
 {
     std::string err = ":ft_irc.1337 432 " + nick_client + ERR_ERRONEUSNICKNAME + "\r\n";
     // Send error message to client socket
-    send(fd, err.c_str(), err.length(), 0); 
+    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
+    {
+        throw std::runtime_error("Error send: FAILED sending ERR_ERRONEUSNICKNAME.");
+    }
 }
 
 void Server::set_newNICKNAMEs(std::string nick , std::string old)
@@ -200,7 +224,7 @@ void Server::handelBuffer(std::map<int, Client>::iterator &it_client)
 {
     std::string temp = it_client->second.getBuffer();
     size_t pos = temp.find('\n');
-    while((pos != std::string::npos ))
+    while((pos != std::string::npos))
     {
         std::string commad  = temp.substr(0, pos);
 
@@ -324,9 +348,14 @@ void Server::handelClient(struct pollfd &even_client)
         if (err == 462)
             std::cout << "Send 462 to client " << even_client.fd << ERR_ALREADYREGISTERED;
     }
+
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        throw -1;
+    }
     
 }
-
 
 
 void Server::start_server(void)
@@ -355,7 +384,7 @@ void Server::start_server(void)
         throw std::runtime_error("Error bind: FAILED bind socket server.");
     }
     
-    std::cout << "Socket server binded to port " << this->port << std::endl;
+    std::cout << "Socket server bound to port " << this->port << std::endl;
     if (listen(server_fd, SOMAXCONN) == FAILED) // SOMAXCONN. This tells the OS: "Give me the maximum possible queue size allowed on this specific machine
     {
         close(server_fd);
@@ -386,7 +415,6 @@ void Server::start_server(void)
                 if (this->fds[i].fd == server_fd)
                 {
                     this->handelNewClient(server_fd);
-
                 }
                 else
                 {
@@ -394,10 +422,7 @@ void Server::start_server(void)
                     {
                         this->handelClient(fds[i]);
                     } 
-/*                    catch(const std::exception& e)
-                    {
-                        std::cerr << e.what() << std::endl;
-                    }*/
+
                     catch(int err)
                     {
                         if (err == -1)

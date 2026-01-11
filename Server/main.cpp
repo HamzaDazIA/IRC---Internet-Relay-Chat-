@@ -1,10 +1,8 @@
 #include "Server.hpp"
-#include <cstdlib>
 
 
 int main(int ac, char **av)
 {
-    // Validate command line arguments: must be exactly 3 (program name, port, password)
     if (ac != 3)
     {
         std::cerr << "Error : you need enter this forme -> \"/ircserv <port> <password> \" " << std::endl; 
@@ -19,16 +17,18 @@ int main(int ac, char **av)
         return 1;
     }
     
+    signal(SIGPIPE, SIG_IGN); // had line bash ignori la failte send() ila kan client saker la connexion and not terminate the server
+    
     Server server(static_cast<int> (l_port), av[2]);
     
-    // Start server and handle any fatal errors
+
     try
     {
         server.start_server();
     }
     catch(const std::exception& e)
     {
-        // Catch all server errors (socket errors, system call failures, etc.)
+
         std::cerr << e.what() << std::endl;
     }
     
