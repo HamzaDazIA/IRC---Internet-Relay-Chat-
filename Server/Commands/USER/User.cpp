@@ -1,7 +1,6 @@
 #include "User.hpp"
 #include "../../Server.hpp"
 #include "../../../helper_functions/help.hpp"
-#include <iostream>
 
 User::User()
 {

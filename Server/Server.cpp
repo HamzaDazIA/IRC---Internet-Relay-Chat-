@@ -135,7 +135,7 @@ void Server::set_newNICKNAMEs(std::string nick , std::string old)
     {
         this->nicknames.erase(old);
     }
-    // Register the new nickname
+
     this->nicknames.insert(nick);
     
 }
