@@ -46,3 +46,14 @@ std::string Help::nick_name(std::string nick)
     return (nick.empty() ? "*" : nick); // condition ? value_if_true : value_if_false;
 
 }
+
+std::string Help::clear_stirng(std::string str)
+{
+    std::string temp = " ";
+    for (size_t i = 0; i < str.length(); i++)
+    {
+        if (std::isprint(str[i]))
+            temp += str[i];
+    }
+    return temp;
+}

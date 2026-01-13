@@ -40,6 +40,7 @@ bool Nick::parsingNICK(std::string &nick)
 
 int Nick::execute(std::vector<std::string> commandss, std::map<int, Client>::iterator &it_client)
 {
+
     std::vector<std::string>::iterator it = commandss.begin();
     if (it[0] == this->upper || it[0] == this->lower) 
     {

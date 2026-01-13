@@ -14,13 +14,11 @@ void Pass::checkPASS(std::string pass, std::map<int, Client>::iterator &client)
     std::string pass_server = this->server->get_password();
     if (pass == pass_server)
     {
-        // Password correct - mark client as authenticated
         client->second.setAuthenticated(true);
         return;
     }
     else
     {
-        // Password wrong - throw exception to trigger 464 error and disconnect
         throw::std::logic_error("wrong password. Disconnecting.");
     }
     
@@ -47,7 +45,6 @@ int  Pass::execute(std::vector<std::string> commandss , std::map<int, Client>::i
         {
             try
             {
-                // Validate password - throws exception if wrong
                 this->checkPASS(it[1], it_client);
                 it_client->second.setAuthenticated(true);
             }
