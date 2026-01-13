@@ -33,8 +33,7 @@ int  Pass::execute(std::vector<std::string> commandss , std::map<int, Client>::i
     std::vector<std::string>::iterator it = commandss.begin();
     if (it[0] == this->upper || it[0] == this->lower)
     {
-        // Check if client is already authenticated - can't send PASS twice
-        // RFC 1459: ERR_ALREADYREGISTERED (462) if already registered
+
         if (it_client->second.isAuthenticated() == true)
         {
             std::string nick_name = Help::nick_name(it_client->second.getNickname());
@@ -43,7 +42,7 @@ int  Pass::execute(std::vector<std::string> commandss , std::map<int, Client>::i
             return 0;
         }
 
-        // Check if password parameter is provided
+
         if (commandss.size() > 1)
         {
             try
@@ -54,7 +53,7 @@ int  Pass::execute(std::vector<std::string> commandss , std::map<int, Client>::i
             }
             catch(const std::exception& e)
             {
-                // 464 ERR_PASSWDMISMATCH - Wrong password, disconnect client
+
                 std::string nick_name = Help::nick_name(it_client->second.getNickname());
                 
                 server->errorPASSWDMISMATCH(it_client->first, nick_name);
@@ -65,7 +64,7 @@ int  Pass::execute(std::vector<std::string> commandss , std::map<int, Client>::i
         }
         else
         {
-            // 461 ERR_NEEDMOREPARAMS - PASS command requires password parameter
+            
             std::string nick_name = Help::nick_name(it_client->second.getNickname());
             server->errorNEEDMOREPARAMS(it_client->first, nick_name, it[0]);
             std::cout << "Send 461 to client " << it_client->first << ": " << it[0] << "\"" << ERR_NEEDMOREPARAMS << "\"" << std::endl;

@@ -14,7 +14,7 @@ Nick::~Nick() {}
 
 
 
-//handel client;
+//==handel client;
 
 bool Nick::parsingNICK(std::string &nick)
 {
@@ -41,7 +41,7 @@ bool Nick::parsingNICK(std::string &nick)
 int Nick::execute(std::vector<std::string> commandss, std::map<int, Client>::iterator &it_client)
 {
     std::vector<std::string>::iterator it = commandss.begin();
-    if (it[0] == this->upper || it[0] == this->lower) // NICK COMMAND
+    if (it[0] == this->upper || it[0] == this->lower) 
     {
         // Client must be authenticated (PASS) before setting nickname
         if (it_client->second.isAuthenticated() == true)
@@ -49,14 +49,14 @@ int Nick::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
             // Check if nickname parameter is provided
             if (commandss.size() < 2)
             {
-                // 431 ERR_NONICKNAMEGIVEN - No nickname parameter provided
+
                 std::string nick = Help::nick_name(it_client->second.getNickname());
                 server->errorNONICKNAMEGIVEN(it_client->first, nick);
                 throw 431;
             }
             else
             {
-                // Validate nickname format (must start with letter, valid chars only)
+
                 bool status = this->parsingNICK(it[1]);
                 if (status == false)
                 {
@@ -84,7 +84,6 @@ int Nick::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
                     }
                     catch (int e)
                     {
-                        // 433 ERR_NICKNAMEINUSE - Nickname already taken by another client
                         if (e == 433)
                         {
                             server->errorNICKNAMEINUSE(it_client->first, it[1]);
@@ -96,7 +95,6 @@ int Nick::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
         }
         else
         {
-            // 464 ERR_PASSWDMISMATCH - Client not authenticated, must send PASS first
             std::string nick_name = Help::nick_name(it_client->second.getNickname());
             server->errorPASSWDMISMATCH(it_client->first, nick_name);
             throw 464; // Causes client disconnect

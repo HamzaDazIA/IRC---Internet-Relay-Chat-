@@ -59,7 +59,7 @@ int User::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
             // 464 ERR_PASSWDMISMATCH - Client not authenticated, must send PASS first
             std::string nick_name = Help::nick_name(it_client->second.getNickname());
             server->errorPASSWDMISMATCH(it_client->first, nick_name);
-            throw 464; // Causes client disconnect
+            throw 464; 
         }
     }
     else

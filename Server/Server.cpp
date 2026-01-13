@@ -41,7 +41,7 @@ void Server::fd_to_NonBlocking(int &fd)
 //=== ERROR HANDLING IMPLEMENTATIONS ===
 
 // Send 421 ERR_UNKNOWNCOMMAND - Command not recognized by server
-// Format: :server 421 <nick> <command> :Unknown command
+
 void Server::errorUNKNOWNCOMMAND(int fd, std::string client, std::string commad)
 {
     std::string err = ":ft_irc.1337 421 " + client + " " + commad + ERR_UNKNOWNCOMMAND + "\r\n";
@@ -54,7 +54,6 @@ void Server::errorUNKNOWNCOMMAND(int fd, std::string client, std::string commad)
 }
 
 // Send 464 ERR_PASSWDMISMATCH - Password authentication failed
-// This is sent when PASS command has wrong password or when commands sent before PASS
 void Server::errorPASSWDMISMATCH(int fd, std::string nick_client)
 {
     std::string err = ":ft_irc.1337 464 " + nick_client + ERR_PASSWDMISMATCH + "\r\n";
@@ -68,7 +67,6 @@ void Server::errorPASSWDMISMATCH(int fd, std::string nick_client)
 }
 
 // Send 461 ERR_NEEDMOREPARAMS - Command missing required parameters
-// Format: :server 461 <nick> <command> :Not enough parameters
 void Server::errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string comand)
 {
     std::string err = ":ft_irc.1337 461 " + nick_client + " " + comand + ERR_NEEDMOREPARAMS + "\r\n";
@@ -80,7 +78,7 @@ void Server::errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string co
 }
 
 // Send 462 ERR_ALREADYREGISTERED - Client trying to re-register after authentication
-// Sent when client sends PASS or USER after already being registered
+
 void Server::errorALREADYREGISTERED(int fd, std::string nick_client)
 {
     std::string err = ":ft_irc.1337 462 " + nick_client + ERR_ALREADYREGISTERED + "\r\n";
@@ -92,11 +90,11 @@ void Server::errorALREADYREGISTERED(int fd, std::string nick_client)
 }
 
 // Send 433 ERR_NICKNAMEINUSE - Requested nickname already taken
-// Client must choose a different nickname
+
 void Server::errorNICKNAMEINUSE(int fd, std::string nick_clint)
 {
     std::string err = ":ft_irc.1337 433 " + nick_clint + ERR_NICKNAMEINUSE + "\r\n";
-    // Send error message to client socket
+
     if (send(fd, err.c_str(), err.length(), 0) == FAILED)
     {
         throw std::runtime_error("Error send: FAILED sending ERR_NICKNAMEINUSE.");
@@ -104,7 +102,6 @@ void Server::errorNICKNAMEINUSE(int fd, std::string nick_clint)
 }
 
 // Send 431 ERR_NONICKNAMEGIVEN - NICK command sent without nickname parameter
-// NOTE: Currently using wrong error code (461 instead of 431) - should be fixed
 void Server::errorNONICKNAMEGIVEN(int fd, std::string nick_client)
 {
     std::string err = ":ft_irc.1337 431 " + nick_client + ERR_NONICKNAMEGIVEN + "\r\n";
@@ -116,11 +113,11 @@ void Server::errorNONICKNAMEGIVEN(int fd, std::string nick_client)
 }
 
 // Send 432 ERR_ERRONEUSNICKNAME - Nickname contains invalid characters
-// Nickname must start with letter and contain only valid IRC characters
+
 void Server::errorERRONEUSNICKNAME(int fd, std::string nick_client)
 {
     std::string err = ":ft_irc.1337 432 " + nick_client + ERR_ERRONEUSNICKNAME + "\r\n";
-    // Send error message to client socket
+
     if (send(fd, err.c_str(), err.length(), 0) == FAILED)
     {
         throw std::runtime_error("Error send: FAILED sending ERR_ERRONEUSNICKNAME.");
@@ -129,12 +126,11 @@ void Server::errorERRONEUSNICKNAME(int fd, std::string nick_client)
 
 void Server::set_newNICKNAMEs(std::string nick , std::string old)
 {
-    // Check if nickname already taken by another client
+
     if (this->nicknames.find(nick) != this->nicknames.end())
     {
         throw 433; // ERR_NICKNAMEINUSE - nickname collision
     }
-    // Remove old nickname if client is changing nickname
     if (!old.empty())
     {
         this->nicknames.erase(old);
@@ -208,8 +204,6 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
             return;
         else
         {
-            // Unknown command - should send 421 ERR_UNKNOWNCOMMAND here
-            // TODO: Implement error handling for unrecognized commands
             this->errorUNKNOWNCOMMAND(it_client->first, it_client->second.getNickname(), it[0]);
             std::cout << "Send 421 to clinet " << it_client->first << ": " << it[0] << std::endl;
             return ;
@@ -258,7 +252,7 @@ void Server::handelClient(struct pollfd &even_client)
             // EWOULDBLOCK or EAGAIN means no data available yet (not an error for non-blocking)
             if (errno == EAGAIN || errno == EWOULDBLOCK)
             {
-                return ; // Normal for non-blocking sockets, try again later
+                return ;
             }
             else
             {
@@ -336,13 +330,13 @@ void Server::handelClient(struct pollfd &even_client)
            std::cout << "Disconnecting client " << even_client.fd << " due to PASSWDMISMATCH." << std::endl;
               throw -1;
         }
-        // 431 ERR_NONICKNAMEGIVEN - NICK command without parameter
+
         if (err == 431)
             std::cout << "Send 431 to client " << even_client.fd << ERR_NONICKNAMEGIVEN;
-        // 432 ERR_ERRONEUSNICKNAME - Invalid nickname format
+
         if (err == 432)
             std::cout << "Send 432 to client " << even_client.fd << ERR_ERRONEUSNICKNAME;
-        // 433 ERR_NICKNAMEINUSE - Nickname already taken
+
         if (err == 433)
             std::cout << "Send 433 to client " << even_client.fd << ERR_NICKNAMEINUSE;
         if (err == 462)
