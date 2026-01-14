@@ -11,11 +11,6 @@ Nick::Nick() : Command()
 
 Nick::~Nick() {}
 
-
-
-
-//==handel client;
-
 bool Nick::parsingNICK(std::string &nick)
 {
 

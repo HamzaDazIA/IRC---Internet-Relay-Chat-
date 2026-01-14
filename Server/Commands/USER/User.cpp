@@ -27,6 +27,10 @@ int User::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
 
                 std::string nick = Help::nick_name(it_client->second.getNickname());
                 std::string err = ERR_NEEDMOREPARAMS(it_client->second.getNickname(), cmd);
+                if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
+                {
+                        throw std::runtime_error("Error sending ERR_ALREADYREGISTERED to client.");
+                }
                 throw 461;
             }
             else
@@ -39,7 +43,7 @@ int User::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
                     {
                         throw std::runtime_error("Error sending ERR_ALREADYREGISTERED to client.");
                     }
-                    return 0;
+                    throw 462;
                 }
 
                 it_client->second.setUsername(Help::clear_stirng(it[1]));
