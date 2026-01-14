@@ -36,7 +36,7 @@ int  Pass::execute(std::vector<std::string> commandss , std::map<int, Client>::i
         {
             std::string nick_name = Help::nick_name(it_client->second.getNickname());
             server->errorALREADYREGISTERED(it_client->first, nick_name);
-            std::cout << "Send 462 to client " << it_client->first << ": " << it[0] << "\"" << ERR_ALREADYREGISTERED << "\"" << std::endl;
+            std::cout << "Send 462 to client " << it_client->first << ": " << it[0] << "\"" << ERR_ALREADYREGISTERED(it_client->second.getNickname()) << "\"" << std::endl;
             return 0;
         }
 
@@ -64,7 +64,7 @@ int  Pass::execute(std::vector<std::string> commandss , std::map<int, Client>::i
             
             std::string nick_name = Help::nick_name(it_client->second.getNickname());
             server->errorNEEDMOREPARAMS(it_client->first, nick_name, it[0]);
-            std::cout << "Send 461 to client " << it_client->first << ": " << it[0] << "\"" << ERR_NEEDMOREPARAMS << "\"" << std::endl;
+            std::cout << "Send 461 to client " << it_client->first << ": " << it[0] << "\"" << ERR_NEEDMOREPARAMS(it_client->second.getNickname(), it[0]) << "\"" << std::endl;
             return 0;
         }
     }

@@ -21,26 +21,27 @@
 // Return value indicating failure for system calls
 #define FAILED -1  
 
+#define ENDL "\r\n"
 // IRC Protocol Error Messages (RFC 1459)
 // 464 ERR_PASSWDMISMATCH - Returned when password authentication fails
 #define ERR_PASSWDMISMATCH " :Password incorrect."
 
 // 421 ERR_UNKNOWNCOMMAND - Returned when client sends unrecognized command
-#define ERR_UNKNOWNCOMMAND(client, command) (":ft_irc.1337 421 " + (client) + " " + (command) + " :Unknown command.")
+#define ERR_UNKNOWNCOMMAND(client, command) (":ft_irc.1337 421 " + (client) + " " + (command) + " :Unknown command." + ENDL)
 // 461 ERR_NEEDMOREPARAMS - Returned when command doesn't have enough parameters
-#define ERR_NEEDMOREPARAMS(nick, comand) (" :Not enough parameters."
+#define ERR_NEEDMOREPARAMS(nick, comand) (":ft_irc.1337 461 " + nick + " " + comand + " :Not enough parameters." + ENDL)
 
 // 462 ERR_ALREADYREGISTERED - Returned when client tries to re-register (PASS after authenticated)
-#define ERR_ALREADYREGISTERED " :You may not reregister."
+#define ERR_ALREADYREGISTERED(nick) (":ft_irc.1337 462 " + nick + " :You may not reregister." + ENDL)
 
 // 433 ERR_NICKNAMEINUSE - Returned when nickname is already taken by another client
-#define ERR_NICKNAMEINUSE " :Nickname is already in use."
+#define ERR_NICKNAMEINUSE(nick) (":ft_irc.1337 433 " + nick + " " + nick + " :Nickname is already in use." + ENDL)
 
 // 431 ERR_NONICKNAMEGIVEN - Returned when NICK command is sent without a nickname parameter
-#define ERR_NONICKNAMEGIVEN " :No nickname given."
+#define ERR_NONICKNAMEGIVEN(nick) (":ft_irc.1337 431 " + nick + " :No nickname given." + ENDL)
 
 // 432 ERR_ERRONEUSNICKNAME - Returned when nickname contains invalid characters or format
-#define ERR_ERRONEUSNICKNAME " :Erroneus nickname."
+#define ERR_ERRONEUSNICKNAME(nick) (":ft_irc.1337 432 " + nick + " :Erroneus nickname." + ENDL)
 
 
 class Server
@@ -71,30 +72,8 @@ class Server
             void handelClient(struct pollfd &even_client);
             void handelBuffer(std::map<int, Client>::iterator &it);
             void handelCommand(std::map<int, Client>::iterator &it_client , std::string commad);
-        
-        //=== ERROR HANDLING FUNCTIONS ===
-            // Send 421 ERR_UNKNOWNCOMMAND when client uses unrecognized command
-            void errorUNKNOWNCOMMAND(int fd, std::string nick_client, std::string commad);
-            
-            // Send 464 ERR_PASSWDMISMATCH when password is incorrect
-            void errorPASSWDMISMATCH(int fd, std::string nick_client);
-            
-            // Send 461 ERR_NEEDMOREPARAMS when command lacks required parameters
-            void errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string comand);
-            
-            // Send 462 ERR_ALREADYREGISTERED when client tries to re-authenticate
-            void errorALREADYREGISTERED(int fd, std::string nick_client);
-            
-            // Send 433 ERR_NICKNAMEINUSE when requested nickname is taken
-            void errorNICKNAMEINUSE(int fd, std::string nick_clint);
-            
-            // Send 431 ERR_NONICKNAMEGIVEN when NICK command has no parameter
-            void errorNONICKNAMEGIVEN(int fd, std::string nick_client);
-            
-            // Send 432 ERR_ERRONEUSNICKNAME when nickname has invalid format
-            void errorERRONEUSNICKNAME(int fd, std::string nick_client);
-            
-            // Send welcome messages (001-004) to successfully registered client
+
+        // Send welcome messages (001-004) to successfully registered client
             void wellcomeMSG(std::map<int, Client>::iterator &it_client);
 };
 

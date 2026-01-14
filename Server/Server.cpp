@@ -38,92 +38,6 @@ void Server::fd_to_NonBlocking(int &fd)
 
 }
 
-//=== ERROR HANDLING IMPLEMENTATIONS ===
-
-// Send 421 ERR_UNKNOWNCOMMAND - Command not recognized by server
-
-void Server::errorUNKNOWNCOMMAND(int fd, std::string client, std::string commad)
-{
-    std::string err = ":ft_irc.1337 421 " + client + " " + commad + ERR_UNKNOWNCOMMAND + "\r\n";
-    // Send error message to client socket
-    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
-    {
-        throw std::runtime_error("Error send: FAILED sending ERR_UNKNOWNCOMMAND.");
-    }
-
-}
-
-// Send 464 ERR_PASSWDMISMATCH - Password authentication failed
-void Server::errorPASSWDMISMATCH(int fd, std::string nick_client)
-{
-    std::string err = ":ft_irc.1337 464 " + nick_client + ERR_PASSWDMISMATCH + "\r\n";
-    // Send error message to client socket
-    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
-    {
-        throw std::runtime_error("Error send: FAILED sending ERR_PASSWDMISMATCH.");
-    }
-
-
-}
-
-// Send 461 ERR_NEEDMOREPARAMS - Command missing required parameters
-void Server::errorNEEDMOREPARAMS(int fd, std::string nick_client, std::string comand)
-{
-    std::string err = ":ft_irc.1337 461 " + nick_client + " " + comand + ERR_NEEDMOREPARAMS + "\r\n";
-    // Send error message to client socket
-    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
-    {
-        throw std::runtime_error("Error send: FAILED sending ERR_NEEDMOREPARAMS.");
-    }
-}
-
-// Send 462 ERR_ALREADYREGISTERED - Client trying to re-register after authentication
-
-void Server::errorALREADYREGISTERED(int fd, std::string nick_client)
-{
-    std::string err = ":ft_irc.1337 462 " + nick_client + ERR_ALREADYREGISTERED + "\r\n";
-    // Send error message to client socket
-    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
-    {
-        throw std::runtime_error("Error send: FAILED sending ERR_ALREADYREGISTERED.");
-    }
-}
-
-// Send 433 ERR_NICKNAMEINUSE - Requested nickname already taken
-
-void Server::errorNICKNAMEINUSE(int fd, std::string nick_clint)
-{
-    std::string err = ":ft_irc.1337 433 " + nick_clint + ERR_NICKNAMEINUSE + "\r\n";
-
-    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
-    {
-        throw std::runtime_error("Error send: FAILED sending ERR_NICKNAMEINUSE.");
-    }
-}
-
-// Send 431 ERR_NONICKNAMEGIVEN - NICK command sent without nickname parameter
-void Server::errorNONICKNAMEGIVEN(int fd, std::string nick_client)
-{
-    std::string err = ":ft_irc.1337 431 " + nick_client + ERR_NONICKNAMEGIVEN + "\r\n";
-    // Send error message to client socket
-    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
-    {
-        throw std::runtime_error("Error send: FAILED sending ERR_NONICKNAMEGIVEN.");
-    }
-}
-
-// Send 432 ERR_ERRONEUSNICKNAME - Nickname contains invalid characters
-
-void Server::errorERRONEUSNICKNAME(int fd, std::string nick_client)
-{
-    std::string err = ":ft_irc.1337 432 " + nick_client + ERR_ERRONEUSNICKNAME + "\r\n";
-
-    if (send(fd, err.c_str(), err.length(), 0) == FAILED)
-    {
-        throw std::runtime_error("Error send: FAILED sending ERR_ERRONEUSNICKNAME.");
-    }
-}
-
 void Server::set_newNICKNAMEs(std::string nick , std::string old)
 {
 
@@ -204,7 +118,7 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
             return;
         else
         {
-            this->errorUNKNOWNCOMMAND(it_client->first, it_client->second.getNickname(), it[0]);
+            ERR_UNKNOWNCOMMAND(it_client->second.getNickname(), it[0]);
             std::cout << "Send 421 to clinet " << it_client->first << ": " << it[0] << std::endl;
             return ;
 
@@ -256,21 +170,7 @@ void Server::handelClient(struct pollfd &even_client)
             }
             else
             {
-                /*
-                close (even_client.fd);
-                this->clients.erase(it);
-                for (std::vector<struct pollfd>::iterator i_itr = this->fds.begin() ; i_itr != this->fds.end() ; i_itr++)
-                {
-                    if (i_itr->fd == even_client.fd)
-                    {
-                        this->fds.erase(i_itr);
-                        break;
-                    }
-                }
-                
-                throw std::runtime_error("Error recv: FAILED to receive data from client.");
-
-                */
+    
                std::cout << "Error receiving data from client " << even_client.fd << std::endl;
                throw -1;
             }
@@ -278,18 +178,7 @@ void Server::handelClient(struct pollfd &even_client)
         else if (bytesRead == 0)
         {
             // Client disconnected gracefully (closed connection)
-            /*
-            this->clients.erase(it);
-            for (std::vector<struct pollfd>::iterator p_it = this->fds.begin(); p_it != this->fds.end(); ++p_it)
-            {
-                if (p_it->fd == even_client.fd)
-                {
-                    this->fds.erase(p_it);
-                    break;
-                }
-            }
-            close(even_client.fd);
-            */
+
            std::cout << "Client " << even_client.fd << " disconnected." << std::endl;
            throw -1;
         }
@@ -314,33 +203,20 @@ void Server::handelClient(struct pollfd &even_client)
         // 464 ERR_PASSWDMISMATCH - Wrong password, disconnect client
         if (err == 464)
         {
-            /*
-            // Remove client from all data structures
-            this->clients.erase(it);
-            for (std::vector<struct pollfd>::iterator p_it = this->fds.begin(); p_it != this->fds.end(); ++p_it)
-            {
-                if (p_it->fd == even_client.fd)
-                {
-                    this->fds.erase(p_it);
-                    break;
-                }
-            }
-            close(even_client.fd); // Close socket
-            */
            std::cout << "Disconnecting client " << even_client.fd << " due to PASSWDMISMATCH." << std::endl;
               throw -1;
         }
 
         if (err == 431)
-            std::cout << "Send 431 to client " << even_client.fd << ERR_NONICKNAMEGIVEN;
+            std::cout << "Send message to client " << even_client.fd << "->" << ERR_NONICKNAMEGIVEN(it->second.getNickname());
 
         if (err == 432)
-            std::cout << "Send 432 to client " << even_client.fd << ERR_ERRONEUSNICKNAME;
+            std::cout << "Send 432 to client " << even_client.fd << ERR_ERRONEUSNICKNAME(it->second.getNickname());
 
         if (err == 433)
-            std::cout << "Send 433 to client " << even_client.fd << ERR_NICKNAMEINUSE;
+            std::cout << "Send 433 to client " << even_client.fd << ERR_NICKNAMEINUSE(it->second.getNickname());
         if (err == 462)
-            std::cout << "Send 462 to client " << even_client.fd << ERR_ALREADYREGISTERED;
+            std::cout << "Send 462 to client " << even_client.fd << ERR_ALREADYREGISTERED(it->second.getNickname());
     }
 
     catch(const std::exception& e)
