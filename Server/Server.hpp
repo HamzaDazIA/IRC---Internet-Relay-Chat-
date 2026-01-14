@@ -26,10 +26,9 @@
 #define ERR_PASSWDMISMATCH " :Password incorrect."
 
 // 421 ERR_UNKNOWNCOMMAND - Returned when client sends unrecognized command
-#define ERR_UNKNOWNCOMMAND " :Unknown command."
-
+#define ERR_UNKNOWNCOMMAND(client, command) (":ft_irc.1337 421 " + (client) + " " + (command) + " :Unknown command.")
 // 461 ERR_NEEDMOREPARAMS - Returned when command doesn't have enough parameters
-#define ERR_NEEDMOREPARAMS " :Not enough parameters."
+#define ERR_NEEDMOREPARAMS(nick, comand) (" :Not enough parameters."
 
 // 462 ERR_ALREADYREGISTERED - Returned when client tries to re-register (PASS after authenticated)
 #define ERR_ALREADYREGISTERED " :You may not reregister."
