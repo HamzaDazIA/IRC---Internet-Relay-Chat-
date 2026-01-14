@@ -1,7 +1,7 @@
 #include "help.hpp"
 
 
-std::string Help::trim(std::string &str) throw()
+std::string Help::trim(std::string &str)
 {
 
     std::string whitespace = " \t\n\r";
@@ -49,7 +49,7 @@ std::string Help::nick_name(std::string nick)
 
 std::string Help::clear_stirng(std::string str)
 {
-    std::string temp = " ";
+    std::string temp = "";
     for (size_t i = 0; i < str.length(); i++)
     {
         if (std::isprint(str[i]))

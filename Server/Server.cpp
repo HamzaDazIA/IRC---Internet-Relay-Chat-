@@ -60,8 +60,8 @@ void Server::handelNewClient(int &server_fd)
 {
 
     struct sockaddr_in newClient = {};
-    socklen_t clinetlen = sizeof(newClient);
-    int newClient_fd = accept(server_fd, (sockaddr *)&newClient, &clinetlen);
+    socklen_t clientlen = sizeof(newClient);
+    int newClient_fd = accept(server_fd, (sockaddr *)&newClient, &clientlen);
 
     std::cout << "New client connected: " << newClient_fd << std::endl;
     if (newClient_fd == FAILED)
@@ -87,7 +87,6 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
 {
     std::vector<std::string> commandss = Help::split_command(commad);
     std::string cmd = "CAP";
-    std::vector<std::string>::iterator it = commandss.begin();
     Nick nick;
     User user;
     Pass pass;
@@ -98,7 +97,7 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
     
     if (commandss.size() > 0)
     {
-        if (it[0] ==  cmd)
+        if (commandss[0] ==  cmd)
         {
             std::string nick = it_client->second.getNickname();
             if (nick.empty())
@@ -111,7 +110,7 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
                 throw std::runtime_error("Error sending ERR_UNKNOWNCOMMAND to client.");
             }
 
-            std::cout << "Send 421 to clinet " << it_client->first << ": " << cmd << std::endl;
+            std::cout << "Send 421 to client " << it_client->first << ": " << cmd << std::endl;
             return ; 
         }
         if (nick.execute(commandss, it_client) == 0)
@@ -122,12 +121,12 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
             return;
         else
         {
-            std::string err = ERR_UNKNOWNCOMMAND(it_client->second.getNickname(), it[0]);
+            std::string err = ERR_UNKNOWNCOMMAND(it_client->second.getNickname(), commandss[0]);
             if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
             {
                 throw std::runtime_error("Error sending ERR_UNKNOWNCOMMAND to client.");
             }
-            std::cout << "Send 421 to clinet " << it_client->first << ": " << it[0] << std::endl;
+            std::cout << "Send 421 to client " << it_client->first << ": " << commandss[0] << std::endl;
             return ;
         }
     }  
