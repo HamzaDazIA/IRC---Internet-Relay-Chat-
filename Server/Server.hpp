@@ -16,6 +16,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <signal.h>
+#include <arpa/inet.h>
 
 //=== ERROR CODES AND MESSAGES ===
 // Return value indicating failure for system calls
@@ -24,7 +25,7 @@
 #define ENDL "\r\n"
 // IRC Protocol Error Messages (RFC 1459)
 // 464 ERR_PASSWDMISMATCH - Returned when password authentication fails
-#define ERR_PASSWDMISMATCH " :Password incorrect."
+#define ERR_PASSWDMISMATCH(client) (":ft_irc.1337 464 " + (client) + " :Password incorrect." + ENDL)
 
 // 421 ERR_UNKNOWNCOMMAND - Returned when client sends unrecognized command
 #define ERR_UNKNOWNCOMMAND(client, command) (":ft_irc.1337 421 " + (client) + " " + (command) + " :Unknown command." + ENDL)

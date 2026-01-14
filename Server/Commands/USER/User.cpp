@@ -26,7 +26,7 @@ int User::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
             {
 
                 std::string nick = Help::nick_name(it_client->second.getNickname());
-                server->errorNEEDMOREPARAMS(it_client->first, nick, cmd);
+                std::string err = ERR_NEEDMOREPARAMS(it_client->second.getNickname(), cmd);
                 throw 461;
             }
             else
@@ -34,8 +34,11 @@ int User::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
                 if (it_client->second.isRegistered() == true)
                 {
                     std::string nick = Help::nick_name(it_client->second.getNickname());
-                    server->errorALREADYREGISTERED(it_client->first, nick);
-                    std::cout << "Send 462 to client " << it_client->first << ": " << cmd << "\"" << ERR_ALREADYREGISTERED << "\"" << std::endl;
+                    std::string err = ERR_ALREADYREGISTERED(it_client->second.getNickname());
+                    if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
+                    {
+                        throw std::runtime_error("Error sending ERR_ALREADYREGISTERED to client.");
+                    }
                     return 0;
                 }
 
@@ -51,7 +54,11 @@ int User::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
         else
         {
             std::string nick_name = Help::nick_name(it_client->second.getNickname());
-            server->errorPASSWDMISMATCH(it_client->first, nick_name);
+            std::string err = ERR_PASSWDMISMATCH(it_client->second.getNickname());
+            if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
+            {
+                throw std::runtime_error("Error sending ERR_PASSWDMISMATCH to client.");
+            }
             throw 464; 
         }
     }

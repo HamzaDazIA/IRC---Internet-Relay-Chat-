@@ -105,8 +105,12 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
             {
                 nick = "*"; //because we dont have name of client we replace to be "*"
             }
-            this->errorUNKNOWNCOMMAND(it_client->first, nick, cmd);
-    
+            std::string err = ERR_UNKNOWNCOMMAND(it_client->second.getNickname(), cmd);
+            if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
+            {
+                throw std::runtime_error("Error sending ERR_UNKNOWNCOMMAND to client.");
+            }
+
             std::cout << "Send 421 to clinet " << it_client->first << ": " << cmd << std::endl;
             return ; 
         }
@@ -118,10 +122,13 @@ void Server::handelCommand(std::map<int, Client>::iterator &it_client , std::str
             return;
         else
         {
-            ERR_UNKNOWNCOMMAND(it_client->second.getNickname(), it[0]);
+            std::string err = ERR_UNKNOWNCOMMAND(it_client->second.getNickname(), it[0]);
+            if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
+            {
+                throw std::runtime_error("Error sending ERR_UNKNOWNCOMMAND to client.");
+            }
             std::cout << "Send 421 to clinet " << it_client->first << ": " << it[0] << std::endl;
             return ;
-
         }
     }  
 
@@ -247,7 +254,7 @@ void Server::start_server(void)
     addr.sin_family = AF_INET; // type of IP is IPv4 
     addr.sin_port = htons(this->port); // set port number we use htons function converts the unsigned short integer hostshort from host byte order to network byte order.
     addr.sin_addr.s_addr = INADDR_ANY; // Address to accept any incoming messages.
-
+    //inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
     if (bind(server_fd, (sockaddr *) (&addr), sizeof(addr)) == FAILED )
     {
         close(server_fd);

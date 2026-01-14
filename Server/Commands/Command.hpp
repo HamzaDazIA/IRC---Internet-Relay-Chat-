@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "../Server.hpp"
+
 
 class Client;
 class Server;

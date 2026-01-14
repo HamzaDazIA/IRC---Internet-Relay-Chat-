@@ -35,8 +35,7 @@ int  Pass::execute(std::vector<std::string> commandss , std::map<int, Client>::i
         if (it_client->second.isAuthenticated() == true)
         {
             std::string nick_name = Help::nick_name(it_client->second.getNickname());
-            server->errorALREADYREGISTERED(it_client->first, nick_name);
-            std::cout << "Send 462 to client " << it_client->first << ": " << it[0] << "\"" << ERR_ALREADYREGISTERED(it_client->second.getNickname()) << "\"" << std::endl;
+            std::string err = ERR_ALREADYREGISTERED(it_client->second.getNickname());
             return 0;
         }
 
@@ -53,8 +52,11 @@ int  Pass::execute(std::vector<std::string> commandss , std::map<int, Client>::i
 
                 std::string nick_name = Help::nick_name(it_client->second.getNickname());
                 
-                server->errorPASSWDMISMATCH(it_client->first, nick_name);
-                std::cout << "Send 464 to client " <<  it_client->first << " " << e.what();
+                std::string err = ERR_PASSWDMISMATCH(it_client->second.getNickname());
+                if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
+                {
+                    throw std::runtime_error("Error sending ERR_PASSWDMISMATCH to client.");
+                }
                 throw 464; // This causes client disconnect in handelClient
             }
             
@@ -63,8 +65,12 @@ int  Pass::execute(std::vector<std::string> commandss , std::map<int, Client>::i
         {
             
             std::string nick_name = Help::nick_name(it_client->second.getNickname());
-            server->errorNEEDMOREPARAMS(it_client->first, nick_name, it[0]);
-            std::cout << "Send 461 to client " << it_client->first << ": " << it[0] << "\"" << ERR_NEEDMOREPARAMS(it_client->second.getNickname(), it[0]) << "\"" << std::endl;
+            std::string err = ERR_NEEDMOREPARAMS(it_client->second.getNickname(), it[0]);
+            if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
+            {
+                throw std::runtime_error("Error sending ERR_NEEDMOREPARAMS to client.");
+            }
+            std::cout << "Send 461 to client " << it_client->first << ": " << it[0] << "\"" << err << "\"" << std::endl;
             return 0;
         }
     }

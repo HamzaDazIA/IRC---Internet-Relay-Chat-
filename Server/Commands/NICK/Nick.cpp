@@ -52,7 +52,11 @@ int Nick::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
             {
 
                 std::string nick = Help::nick_name(it_client->second.getNickname());
-                server->errorNONICKNAMEGIVEN(it_client->first, nick);
+                std::string err = ERR_NONICKNAMEGIVEN(nick);
+                if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
+                {
+                    throw std::runtime_error("Error sending ERR_NONICKNAMEGIVEN to client.");
+                }
                 throw 431;
             }
             else
@@ -62,7 +66,11 @@ int Nick::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
                 if (status == false)
                 {
                     // 432 ERR_ERRONEUSNICKNAME - Invalid nickname format
-                    server->errorERRONEUSNICKNAME(it_client->first, it[1]);
+                    std::string err = ERR_ERRONEUSNICKNAME(it[1]);
+                    if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
+                    {
+                        throw std::runtime_error("Error sending ERR_ERRONEUSNICKNAME to client.");
+                    }
                     throw 432;
                 }
                 else
@@ -87,7 +95,11 @@ int Nick::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
                     {
                         if (e == 433)
                         {
-                            server->errorNICKNAMEINUSE(it_client->first, it[1]);
+                            std::string err = ERR_NICKNAMEINUSE(it[1]);
+                            if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
+                            {
+                                throw std::runtime_error("Error sending ERR_NICKNAMEINUSE to client.");
+                            }
                             throw 433;
                         }
                     }
@@ -97,7 +109,11 @@ int Nick::execute(std::vector<std::string> commandss, std::map<int, Client>::ite
         else
         {
             std::string nick_name = Help::nick_name(it_client->second.getNickname());
-            server->errorPASSWDMISMATCH(it_client->first, nick_name);
+            std::string err = ERR_PASSWDMISMATCH(nick_name);
+            if (send(it_client->first, err.c_str(), err.length(), 0) < 0)
+            {
+                throw std::runtime_error("Error sending ERR_PASSWDMISMATCH to client.");
+            }
             throw 464; // Causes client disconnect
         }
             
