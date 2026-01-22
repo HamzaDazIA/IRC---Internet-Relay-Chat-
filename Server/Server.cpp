@@ -276,7 +276,7 @@ void Server::start_server(void)
     int poll_flag = 0;
     while(true)
     {
-
+        
         poll_flag = poll(this->fds.data(), this->fds.size(), -1);
 
         if (poll_flag == FAILED)
